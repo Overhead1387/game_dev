@@ -8,6 +8,23 @@ using UnityEditor;
 
 namespace HyperCasual.Runner
 {
+public class PlayerController : MonoBehaviour
+    {
+        private void Awake()
+        {
+            Debug.LogWarning("PlayerController is deprecated. Please use Player instead.");
+            if (Player.Instance == null)
+            {
+                Debug.LogError("Player instance not found!");
+            }
+        }
+
+        public static PlayerController Instance => Player.Instance as PlayerController;
+
+
+        public float Speed => Player.Instance.CurrentSpeed;
+    }
+
     public class GameController : MonoBehaviour
     {
         public static GameController Instance { get; private set; }

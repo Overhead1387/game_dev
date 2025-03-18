@@ -5,54 +5,43 @@ namespace HyperCasual.Runner
 {
     public class DataManager : MonoBehaviour
     {
-        public static DataManager Instance => s_Instance;
-        private static DataManager s_Instance;
+        public class SaveManager : MonoBehaviour
+            {
+                private void Awake()
+                {
+                    Debug.LogWarning("SaveManager is deprecated. Please use DataManager instead.");
+                }
 
-        private const string LevelProgressKey = "LevelProgress";
-        private const string CurrencyKey = "Currency";
-        private const string XpKey = "Xp";
-        private const string AudioSettingsKey = "AudioSettings";
-        private const string QualityLevelKey = "QualityLevel";
+                public static SaveManager Instance => DataManager.Instance as SaveManager;
 
-        private void Awake()
-        {
-            s_Instance = this;
-        }
+                // Forward properties and methods
+                public int LevelProgress
+                {
+                    get => DataManager.Instance.LevelProgress;
+                    set => DataManager.Instance.LevelProgress = value;
+                }
 
-        public int LevelProgress
-        {
-            get => PlayerPrefs.GetInt(LevelProgressKey);
-            set => PlayerPrefs.SetInt(LevelProgressKey, value);
-        }
+                public int Currency
+                {
+                    get => DataManager.Instance.Currency;
+                    set => DataManager.Instance.Currency = value;
+                }
 
-        public int Currency
-        {
-            get => PlayerPrefs.GetInt(CurrencyKey);
-            set => PlayerPrefs.SetInt(CurrencyKey, value);
-        }
+                public float XP
+                {
+                    get => DataManager.Instance.XP;
+                    set => DataManager.Instance.XP = value;
+                }
 
-        public float XP
-        {
-            get => PlayerPrefs.GetFloat(XpKey);
-            set => PlayerPrefs.SetFloat(XpKey, value);
-        }
+                public bool IsQualityLevelSaved => DataManager.Instance.IsQualityLevelSaved;
 
-        public bool IsQualityLevelSaved => PlayerPrefs.HasKey(QualityLevelKey);
+                public int QualityLevel
+                {
+                    get => DataManager.Instance.QualityLevel;
+                    set => DataManager.Instance.QualityLevel = value;
+                }
 
-        public int QualityLevel
-        {
-            get => PlayerPrefs.GetInt(QualityLevelKey);
-            set => PlayerPrefs.SetInt(QualityLevelKey, value);
-        }
-
-        public AudioSettings LoadAudioSettings()
-        {
-            return PlayerPrefsUtils.Read<AudioSettings>(AudioSettingsKey);
-        }
-
-        public void SaveAudioSettings(AudioSettings audioSettings)
-        {
-            PlayerPrefsUtils.Write(AudioSettingsKey, audioSettings);
-        }
-    }
+                public AudioSettings LoadAudioSettings() => DataManager.Instance.LoadAudioSettings();
+                public void SaveAudioSettings(AudioSettings audioSettings) => DataManager.Instance.SaveAudioSettings(audioSettings);
+            }
 }

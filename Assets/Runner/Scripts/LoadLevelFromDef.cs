@@ -8,6 +8,7 @@ namespace HyperCasual.Runner
     public class LoadLevelFromData : AbstractState
     {
         private readonly LevelData _levelData;
+            public LevelData m_LevelDefinition => _levelData; // Compatibility property
         private readonly SceneController _sceneController;
         private readonly GameObject[] _managerPrefabs;
 
