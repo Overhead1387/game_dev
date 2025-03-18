@@ -1,28 +1,40 @@
+using System.Collections;
+using System.Collections.Generic;
 using HyperCasual.Gameplay;
 using UnityEngine;
 
 namespace HyperCasual.Runner
 {
-    public class Collectible : SpawnableEntity
+    /// <summary>
+    /// A class representing a Spawnable object.
+    /// If a GameObject tagged "Player" collides
+    /// with this object, it will be collected, 
+    // incrementing the player's amount of this item.
+    /// </summary>
+    public class Collectable : Spawnable
     {
         [SerializeField]
-        private SoundID _sound = SoundID.None;
+        SoundID m_Sound = SoundID.None;
+        
+        const string k_PlayerTag = "Player";
 
-        private const string PlayerTag = "Player";
+        public ItemPickedEvent m_Event;
+        public int m_Count;
 
-        public ItemPickedEvent PickedEvent;
-        public int Count;
+        bool m_Collected;
+        Renderer[] m_Renderers;
 
-        private bool _isCollected;
-        private Renderer[] _renderers;
-
-        public override void ResetEntity()
+        /// <summary>
+        /// Reset the gate to its initial state. Called when a level
+        /// is restarted by the GameManager.
+        /// </summary>
+        public override void ResetSpawnable()
         {
-            _isCollected = false;
-
-            foreach (Renderer renderer in _renderers)
+            m_Collected = false;
+            
+            for (int i = 0; i < m_Renderers.Length; i++)
             {
-                renderer.enabled = true;
+                m_Renderers[i].enabled = true;
             }
         }
 
@@ -30,32 +42,32 @@ namespace HyperCasual.Runner
         {
             base.Awake();
 
-            _renderers = gameObject.GetComponentsInChildren<Renderer>();
+            m_Renderers = gameObject.GetComponentsInChildren<Renderer>();
         }
 
-        private void OnTriggerEnter(Collider other)
+        void OnTriggerEnter(Collider col)
         {
-            if (other.CompareTag(PlayerTag) && !_isCollected)
+            if (col.CompareTag(k_PlayerTag) && !m_Collected)
             {
                 Collect();
             }
         }
 
-        private void Collect()
+        void Collect()
         {
-            if (PickedEvent != null)
+            if (m_Event != null)
             {
-                PickedEvent.Count = Count;
-                PickedEvent.Raise();
+                m_Event.Count = m_Count;
+                m_Event.Raise();
             }
 
-            foreach (Renderer renderer in _renderers)
+            for (int i = 0; i < m_Renderers.Length; i++)
             {
-                renderer.enabled = false;
+                m_Renderers[i].enabled = false;
             }
 
-            _isCollected = true;
-            AudioManager.Instance.PlayEffect(_sound);
+            m_Collected = true;
+            AudioManager.Instance.PlayEffect(m_Sound);
         }
     }
 }

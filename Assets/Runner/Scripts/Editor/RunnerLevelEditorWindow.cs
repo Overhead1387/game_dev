@@ -8,24 +8,24 @@ using UnityEditor.SceneManagement;
 namespace HyperCasual.Runner
 {
     /// <summary>
-    /// A level editor window that allows the user to
-    /// load levels in the level editor scene, modify level
+    /// A level editor window that allows the user to 
+    /// load levels in the level editor scene, modify level 
     /// parameters, and save that level to be loaded in
     /// a Runner game.
     /// </summary>
     public class RunnerLevelEditorWindow : EditorWindow
     {
         internal bool HasLoadedLevel { get; private set; }
-        internal LevelData SourceLevelData => m_SourceLevelData;
-        LevelData m_SourceLevelData;
-        LevelData m_LoadedLevelData;
+        internal LevelDefinition SourceLevelDefinition => m_SourceLevelDefinition;
+        LevelDefinition m_SourceLevelDefinition;
+        LevelDefinition m_LoadedLevelDefinition;
 
         GameObject m_LevelParentGO;
         GameObject m_LoadedLevelGO;
         GameObject m_TerrainGO;
         GameObject m_LevelMarkersGO;
 
-        List<SpawnableEntity> m_SelectedSpawnables = new List<SpawnableEntity>();
+        List<Spawnable> m_SelectedSpawnables = new List<Spawnable>();
         Color m_ActiveColor;
         bool m_CurrentLevelNotLoaded;
         bool m_AutoSaveShowSettings;
@@ -49,9 +49,9 @@ namespace HyperCasual.Runner
         const string k_LevelEditorScenePath = "Assets/Runner/Scenes/RunnerLevelEditor.unity";
 
         /// <summary>
-        /// Returns the loaded LevelData.
+        /// Returns the loaded LevelDefinition.
         /// </summary>
-        public LevelData LoadedLevelData => m_LoadedLevelData;
+        public LevelDefinition LoadedLevelDefinition => m_LoadedLevelDefinition;
 
         static readonly Color s_Blue = new Color(0.0f, 0.0f, 1.0f, 1.0f);
         static readonly string s_LevelParentTag = "LevelParent";
@@ -66,7 +66,7 @@ namespace HyperCasual.Runner
             window.LoadAutoSaveSettings();
         }
 
-        void OnFocus()
+        void OnFocus() 
         {
             SceneView.duringSceneGui -= OnSceneGUI;
             SceneView.duringSceneGui += OnSceneGUI;
@@ -112,40 +112,40 @@ namespace HyperCasual.Runner
 
         void OnPlayModeChanged(PlayModeStateChange state)
         {
-            if ((state == PlayModeStateChange.EnteredEditMode || state == PlayModeStateChange.EnteredPlayMode) && m_SourceLevelData != null)
+            if ((state == PlayModeStateChange.EnteredEditMode || state == PlayModeStateChange.EnteredPlayMode) && m_SourceLevelDefinition != null)
             {
                 Scene scene = EditorSceneManager.GetActiveScene();
                 if (scene.name.Equals(k_LevelEditorSceneName))
                 {
                     // Reload the scene automatically
-                    LoadLevel(m_SourceLevelData);
+                    LoadLevel(m_SourceLevelDefinition);
                 }
             }
-            else if (state == PlayModeStateChange.ExitingEditMode && m_SourceLevelData != null && !LevelNotLoaded())
+            else if (state == PlayModeStateChange.ExitingEditMode && m_SourceLevelDefinition != null && !LevelNotLoaded())
             {
                 Scene scene = EditorSceneManager.GetActiveScene();
                 if (scene.name.Equals(k_LevelEditorSceneName))
                 {
                     // Save the scene automatically before testing
-                    SaveLevel(m_LoadedLevelData);
+                    SaveLevel(m_LoadedLevelDefinition);
                 }
             }
         }
 
         void OnSceneSaved(Scene scene)
         {
-            if (m_SourceLevelData != null && !LevelNotLoaded())
+            if (m_SourceLevelDefinition != null && !LevelNotLoaded())
             {
                 if (scene.name.Equals(k_LevelEditorSceneName))
                 {
-                    SaveLevel(m_LoadedLevelData);
+                    SaveLevel(m_LoadedLevelDefinition);
                 }
             }
         }
 
         void OnSelectionChange()
         {
-            // Needed to update color options when a SpawnableEntity is selected
+            // Needed to update color options when a Spawnable is selected
             Repaint();
         }
 
@@ -158,7 +158,7 @@ namespace HyperCasual.Runner
 
         void OnSceneGUI(SceneView sceneView)
         {
-            if (m_LoadedLevelData == null)
+            if (m_LoadedLevelDefinition == null)
             {
                 string levelPath = EditorPrefs.GetString(k_EditorPrefsPreviouslyLoadedLevelPath);
                 bool levelPathExists = !string.IsNullOrEmpty(levelPath);
@@ -166,11 +166,11 @@ namespace HyperCasual.Runner
                 // Attempt to load previously loaded level
                 if (!m_AttemptedToLoadPreviousLevel && levelPathExists)
                 {
-                    m_SourceLevelData = AssetDatabase.LoadAssetAtPath<LevelData>(levelPath);
+                    m_SourceLevelDefinition = AssetDatabase.LoadAssetAtPath<LevelDefinition>(levelPath);
 
-                    if (m_SourceLevelData != null)
+                    if (m_SourceLevelDefinition != null)
                     {
-                        LoadLevel(m_SourceLevelData);
+                        LoadLevel(m_SourceLevelDefinition);
                     }
                     else
                     {
@@ -183,17 +183,17 @@ namespace HyperCasual.Runner
                     Debug.LogError($"Could not load level with path {levelPath}. Specify a valid level to continue.");
                     m_AttemptedToLoadPreviousLevel = true;
                 }
-
+                
                 return;
             }
 
-            if (m_LoadedLevelData.SnapToGrid)
+            if (m_LoadedLevelDefinition.SnapToGrid)
             {
-                float nearestGridPositionToLevelWidth = m_LoadedLevelData.LevelWidth + m_LoadedLevelData.LevelWidth % m_LoadedLevelData.GridSize;
-                float nearestGridPositionToLevelLength = m_LoadedLevelData.LevelLength + m_LoadedLevelData.LevelLength % m_LoadedLevelData.GridSize;
+                float nearestGridPositionToLevelWidth = m_LoadedLevelDefinition.LevelWidth + m_LoadedLevelDefinition.LevelWidth % m_LoadedLevelDefinition.GridSize;
+                float nearestGridPositionToLevelLength = m_LoadedLevelDefinition.LevelLength + m_LoadedLevelDefinition.LevelLength % m_LoadedLevelDefinition.GridSize;
 
-                int numberOfGridLinesWide = (int)Mathf.Ceil(nearestGridPositionToLevelWidth / m_LoadedLevelData.GridSize);
-                int numberOfGridLinesLong = (int)Mathf.Ceil(nearestGridPositionToLevelLength / m_LoadedLevelData.GridSize);
+                int numberOfGridLinesWide = (int)Mathf.Ceil(nearestGridPositionToLevelWidth / m_LoadedLevelDefinition.GridSize);
+                int numberOfGridLinesLong = (int)Mathf.Ceil(nearestGridPositionToLevelLength / m_LoadedLevelDefinition.GridSize);
 
                 Handles.BeginGUI();
                 Handles.color = s_Blue;
@@ -201,21 +201,21 @@ namespace HyperCasual.Runner
                 // Empty label is needed to draw lines below
                 Handles.Label(Vector3.zero, "");
 
-                float gridWidth = numberOfGridLinesWide * m_LoadedLevelData.GridSize;
-                float gridLength = numberOfGridLinesLong * m_LoadedLevelData.GridSize;
+                float gridWidth = numberOfGridLinesWide * m_LoadedLevelDefinition.GridSize;
+                float gridLength = numberOfGridLinesLong * m_LoadedLevelDefinition.GridSize;
 
-                // Draw horizontal grid lines (parallel to X axis) from the start
+                // Draw horizontal grid lines (parallel to X axis) from the start 
                 // of the level to the end of the level
                 for (int z = 0; z <= numberOfGridLinesLong; z++)
                 {
-                    float zPosition = z * m_LoadedLevelData.GridSize;
+                    float zPosition = z * m_LoadedLevelDefinition.GridSize;
                     Handles.DrawLine(new Vector3(-gridWidth, 0.0f, zPosition), new Vector3(gridWidth, 0.0f, zPosition));
                 }
 
                 // Draw vertical grid lines (parallel to Z axis) from the center out
                 for (int x = 0; x <= numberOfGridLinesWide; x++)
                 {
-                    float xPosition = x * m_LoadedLevelData.GridSize;
+                    float xPosition = x * m_LoadedLevelDefinition.GridSize;
                     Handles.DrawLine(new Vector3(-xPosition, 0.0f, 0.0f), new Vector3(-xPosition, 0.0f, gridLength));
 
                     // Only draw one grid line at the center of the level
@@ -248,27 +248,27 @@ namespace HyperCasual.Runner
                 if (GUILayout.Button("Open Level Editor Scene"))
                 {
                     EditorSceneManager.OpenScene(k_LevelEditorScenePath);
-                    if (m_SourceLevelData != null)
+                    if (m_SourceLevelDefinition != null)
                     {
-                        LoadLevel(m_SourceLevelData);
+                        LoadLevel(m_SourceLevelDefinition);
                     }
                 }
                 return;
             }
 
-            m_SourceLevelData = (LevelData)EditorGUILayout.ObjectField("Level Definition", m_SourceLevelData, typeof(LevelData), false, null);
+            m_SourceLevelDefinition = (LevelDefinition)EditorGUILayout.ObjectField("Level Definition", m_SourceLevelDefinition, typeof(LevelDefinition), false, null);
 
-            if (m_SourceLevelData == null)
+            if (m_SourceLevelDefinition == null)
             {
-                GUILayout.Label("Select a LevelData ScriptableObject to begin.");
+                GUILayout.Label("Select a LevelDefinition ScriptableObject to begin.");
                 HasLoadedLevel = false;
                 return;
             }
 
-            if (m_LoadedLevelData != null && !m_SourceLevelData.name.Equals(m_LoadedLevelData.name))
+            if (m_LoadedLevelDefinition != null && !m_SourceLevelDefinition.name.Equals(m_LoadedLevelDefinition.name))
             {
                 // Automatically load the new source level if it has changed.
-                LoadLevel(m_SourceLevelData);
+                LoadLevel(m_SourceLevelDefinition);
                 return;
             }
 
@@ -281,15 +281,15 @@ namespace HyperCasual.Runner
             {
                 if (GUILayout.Button("Reload Level"))
                 {
-                    LoadLevel(m_SourceLevelData);
+                    LoadLevel(m_SourceLevelDefinition);
                 }
             }
             else
             {
-                LoadLevel(m_SourceLevelData);
+                LoadLevel(m_SourceLevelDefinition);
             }
 
-            if (m_LoadedLevelData == null || m_CurrentLevelNotLoaded)
+            if (m_LoadedLevelDefinition == null || m_CurrentLevelNotLoaded)
             {
                 GUILayout.Label("No level loaded.");
                 return;
@@ -297,7 +297,7 @@ namespace HyperCasual.Runner
 
             if (GUILayout.Button("Save Level"))
             {
-                SaveLevel(m_LoadedLevelData);
+                SaveLevel(m_LoadedLevelDefinition);
             }
 
             // Auto-save
@@ -322,27 +322,27 @@ namespace HyperCasual.Runner
             GUILayout.Label("Terrain", EditorStyles.boldLabel);
 
             EditorGUI.BeginChangeCheck();
-            m_LoadedLevelData.LevelLength = Mathf.Max(0.0f, EditorGUILayout.FloatField("Length", m_LoadedLevelData.LevelLength));
-            m_LoadedLevelData.LevelWidth = Mathf.Max(0.0f, EditorGUILayout.FloatField("Width", m_LoadedLevelData.LevelWidth));
-            m_LoadedLevelData.LevelLengthBufferStart = Mathf.Max(0.0f, EditorGUILayout.FloatField("Start Buffer", m_LoadedLevelData.LevelLengthBufferStart));
-            m_LoadedLevelData.LevelLengthBufferEnd = Mathf.Max(0.0f, EditorGUILayout.FloatField("End Buffer", m_LoadedLevelData.LevelLengthBufferEnd));
-            m_LoadedLevelData.LevelThickness = Mathf.Max(EditorGUILayout.FloatField("Level Thickness", m_LoadedLevelData.LevelThickness));
-            m_LoadedLevelData.TerrainMaterial = (Material)EditorGUILayout.ObjectField("Terrain Material", m_LoadedLevelData.TerrainMaterial, typeof(Material), false, null);
+            m_LoadedLevelDefinition.LevelLength = Mathf.Max(0.0f, EditorGUILayout.FloatField("Length", m_LoadedLevelDefinition.LevelLength));
+            m_LoadedLevelDefinition.LevelWidth = Mathf.Max(0.0f, EditorGUILayout.FloatField("Width", m_LoadedLevelDefinition.LevelWidth));
+            m_LoadedLevelDefinition.LevelLengthBufferStart = Mathf.Max(0.0f, EditorGUILayout.FloatField("Start Buffer", m_LoadedLevelDefinition.LevelLengthBufferStart));
+            m_LoadedLevelDefinition.LevelLengthBufferEnd = Mathf.Max(0.0f, EditorGUILayout.FloatField("End Buffer", m_LoadedLevelDefinition.LevelLengthBufferEnd));
+            m_LoadedLevelDefinition.LevelThickness = Mathf.Max(EditorGUILayout.FloatField("Level Thickness", m_LoadedLevelDefinition.LevelThickness));
+            m_LoadedLevelDefinition.TerrainMaterial = (Material)EditorGUILayout.ObjectField("Terrain Material", m_LoadedLevelDefinition.TerrainMaterial, typeof(Material), false, null);
             if (EditorGUI.EndChangeCheck() && m_TerrainGO != null && m_LevelParentGO != null)
             {
-                GameController.BuildTerrain(m_LoadedLevelData, ref m_TerrainGO);
-                m_TerrainGO.PlayerTransform.SetParent(m_LevelParentGO.PlayerTransform);
+                GameManager.CreateTerrain(m_LoadedLevelDefinition, ref m_TerrainGO);
+                m_TerrainGO.transform.SetParent(m_LevelParentGO.transform);
             }
             EditorGUILayout.Space();
 
-            // SpawnableEntity Snapping
+            // Spawnable Snapping
 
             GUILayout.Label("Snapping Options", EditorStyles.boldLabel);
-            m_LoadedLevelData.SnapToGrid = EditorGUILayout.Toggle("Snap to Grid", m_LoadedLevelData.SnapToGrid);
-            if (m_LoadedLevelData.SnapToGrid)
+            m_LoadedLevelDefinition.SnapToGrid = EditorGUILayout.Toggle("Snap to Grid", m_LoadedLevelDefinition.SnapToGrid);
+            if (m_LoadedLevelDefinition.SnapToGrid)
             {
                 // Ensure the grid size is never too small, zero, or negative
-                m_LoadedLevelData.GridSize = Mathf.Max(0.1f, EditorGUILayout.FloatField("Grid Size", m_LoadedLevelData.GridSize));
+                m_LoadedLevelDefinition.GridSize = Mathf.Max(0.1f, EditorGUILayout.FloatField("Grid Size", m_LoadedLevelDefinition.GridSize));
             }
             EditorGUILayout.Space();
 
@@ -350,31 +350,31 @@ namespace HyperCasual.Runner
 
             GUILayout.Label("Prefabs", EditorStyles.boldLabel);
             EditorGUI.BeginChangeCheck();
-            m_LoadedLevelData.StartPrefab = (GameObject)EditorGUILayout.ObjectField("Start Prefab", m_LoadedLevelData.StartPrefab, typeof(GameObject), false, null);
-            m_LoadedLevelData.EndPrefab = (GameObject)EditorGUILayout.ObjectField("End Prefab", m_LoadedLevelData.EndPrefab, typeof(GameObject), false, null);
+            m_LoadedLevelDefinition.StartPrefab = (GameObject)EditorGUILayout.ObjectField("Start Prefab", m_LoadedLevelDefinition.StartPrefab, typeof(GameObject), false, null);
+            m_LoadedLevelDefinition.EndPrefab = (GameObject)EditorGUILayout.ObjectField("End Prefab", m_LoadedLevelDefinition.EndPrefab, typeof(GameObject), false, null);
             if (EditorGUI.EndChangeCheck())
             {
-                GameController.PlaceLevelMarkers(m_LoadedLevelData, ref m_LevelMarkersGO);
-                m_LevelMarkersGO.PlayerTransform.SetParent(m_LevelParentGO.PlayerTransform);
+                GameManager.PlaceLevelMarkers(m_LoadedLevelDefinition, ref m_LevelMarkersGO);
+                m_LevelMarkersGO.transform.SetParent(m_LevelParentGO.transform);
             }
             EditorGUILayout.Space();
 
-            // SpawnableEntity Coloring
+            // Spawnable Coloring
             if (Selection.gameObjects != null && Selection.gameObjects.Length > 0)
             {
                 m_SelectedSpawnables.Clear();
                 for (int i = 0; i < Selection.gameObjects.Length; i++)
                 {
-                    SpawnableEntity SpawnableEntity = Selection.gameObjects[i].GetComponent<SpawnableEntity>();
-                    if (SpawnableEntity != null && PrefabUtility.IsPartOfNonAssetPrefabInstance(Selection.gameObjects[i]))
+                    Spawnable spawnable = Selection.gameObjects[i].GetComponent<Spawnable>();
+                    if (spawnable != null && PrefabUtility.IsPartOfNonAssetPrefabInstance(Selection.gameObjects[i]))
                     {
-                        m_SelectedSpawnables.Add(SpawnableEntity);
+                        m_SelectedSpawnables.Add(spawnable);
                     }
                 }
 
                 if (m_SelectedSpawnables.Count > 0)
                 {
-                    GUILayout.Label("Selected SpawnableEntity Options", EditorStyles.boldLabel);
+                    GUILayout.Label("Selected Spawnable Options", EditorStyles.boldLabel);
                     m_ActiveColor = EditorGUILayout.ColorField("Base Color", m_ActiveColor);
                     if (GUILayout.Button("Apply Base Color to Selected Spawnables"))
                     {
@@ -387,37 +387,37 @@ namespace HyperCasual.Runner
                 EditorGUILayout.Space();
             }
 
-            EditorGUILayout.HelpBox($"New objects added to the level require a {nameof(SpawnableEntity)} type component added to the GameObject", MessageType.Info);
+            EditorGUILayout.HelpBox($"New objects added to the level require a {nameof(Spawnable)} type component added to the GameObject", MessageType.Info);
         }
 
         bool LevelNotLoaded()
         {
-            return m_LoadedLevelData == null || m_LevelParentGO == null || m_LoadedLevelGO == null || m_TerrainGO == null || m_LevelMarkersGO == null;
+            return m_LoadedLevelDefinition == null || m_LevelParentGO == null || m_LoadedLevelGO == null || m_TerrainGO == null || m_LevelMarkersGO == null;
         }
 
-        void LoadLevel(LevelData LevelData)
+        void LoadLevel(LevelDefinition levelDefinition)
         {
             UnloadOpenLevels();
 
             if (!EditorSceneManager.GetActiveScene().path.Equals(k_LevelEditorScenePath))
                 return;
 
-            m_LoadedLevelData = Instantiate(LevelData);
-            m_LoadedLevelData.name = LevelData.name;
+            m_LoadedLevelDefinition = Instantiate(levelDefinition);
+            m_LoadedLevelDefinition.name = levelDefinition.name;
 
             m_LevelParentGO = new GameObject(k_LevelParentGameObjectName);
             m_LevelParentGO.tag = s_LevelParentTag;
 
-            GameController.LoadLevel(m_LoadedLevelData, ref m_LoadedLevelGO);
-            GameController.BuildTerrain(m_LoadedLevelData, ref m_TerrainGO);
-            GameController.PlaceLevelMarkers(m_LoadedLevelData, ref m_LevelMarkersGO);
+            GameManager.LoadLevel(m_LoadedLevelDefinition, ref m_LoadedLevelGO);
+            GameManager.CreateTerrain(m_LoadedLevelDefinition, ref m_TerrainGO);
+            GameManager.PlaceLevelMarkers(m_LoadedLevelDefinition, ref m_LevelMarkersGO);
 
-            m_LoadedLevelGO.PlayerTransform.SetParent(m_LevelParentGO.PlayerTransform);
-            m_TerrainGO.PlayerTransform.SetParent(m_LevelParentGO.PlayerTransform);
-            m_LevelMarkersGO.PlayerTransform.SetParent(m_LevelParentGO.PlayerTransform);
+            m_LoadedLevelGO.transform.SetParent(m_LevelParentGO.transform);
+            m_TerrainGO.transform.SetParent(m_LevelParentGO.transform);
+            m_LevelMarkersGO.transform.SetParent(m_LevelParentGO.transform);
             HasLoadedLevel = true;
 
-            string levelPath = AssetDatabase.GetAssetPath(LevelData);
+            string levelPath = AssetDatabase.GetAssetPath(levelDefinition);
             EditorPrefs.SetString(k_EditorPrefsPreviouslyLoadedLevelPath, levelPath);
 
             m_AttemptedToLoadPreviousLevel = false;
@@ -436,23 +436,23 @@ namespace HyperCasual.Runner
             m_LevelParentGO = null;
         }
 
-        void SaveLevel(LevelData LevelData)
+        void SaveLevel(LevelDefinition levelDefinition)
         {
             if (m_AutoSaveLevel)
             {
                 // Update array of spawnables based on what is currently in the scene
-                SpawnableEntity[] spawnables = (SpawnableEntity[])Object.FindObjectsOfType(typeof(SpawnableEntity));
-                LevelData.Spawnables = new LevelData.SpawnableObject[spawnables.Length];
+                Spawnable[] spawnables = (Spawnable[])Object.FindObjectsOfType(typeof(Spawnable));
+                levelDefinition.Spawnables = new LevelDefinition.SpawnableObject[spawnables.Length];
                 for (int i = 0; i < spawnables.Length; i++)
                 {
                     try
                     {
-                        LevelData.Spawnables[i] = new LevelData.SpawnableObject()
+                        levelDefinition.Spawnables[i] = new LevelDefinition.SpawnableObject()
                         {
                             SpawnablePrefab = PrefabUtility.GetCorrespondingObjectFromOriginalSource(spawnables[i].gameObject),
                             Position = spawnables[i].SavedPosition,
-                            EulerAngles = spawnables[i].PlayerTransform.eulerAngles,
-                            Scale = spawnables[i].PlayerTransform.lossyScale,
+                            EulerAngles = spawnables[i].transform.eulerAngles,
+                            Scale = spawnables[i].transform.lossyScale,
                             BaseColor = spawnables[i].BaseColor
                         };
                     }
@@ -463,12 +463,12 @@ namespace HyperCasual.Runner
                 }
 
                 // Overwrite source level definition with current version
-                m_SourceLevelData.UpdateValues(LevelData);
+                m_SourceLevelDefinition.SaveValues(levelDefinition);
             }
 
             if (m_AutoSavePlayer)
             {
-                Player[] players = (Player[])Object.FindObjectsOfType(typeof(Player));
+                PlayerController[] players = (PlayerController[])Object.FindObjectsOfType(typeof(PlayerController));
                 if (players.Length == 1)
                 {
                     GameObject playerPrefab = PrefabUtility.GetCorrespondingObjectFromOriginalSource(players[0].gameObject);
@@ -478,25 +478,25 @@ namespace HyperCasual.Runner
                     }
                     else
                     {
-                        Debug.LogError("Player could not be found on a prefab instance. Changes could not be saved.");
+                        Debug.LogError("PlayerController could not be found on a prefab instance. Changes could not be saved.");
                     }
                 }
                 else
                 {
                     if (players.Length == 0)
                     {
-                        Debug.LogWarning("No instance of Player found in the scene. No changes saved!");
+                        Debug.LogWarning("No instance of PlayerController found in the scene. No changes saved!");
                     }
-                    else
+                    else 
                     {
-                        Debug.LogWarning("More than two instances of Player found in the scene. No changes saved!");
+                        Debug.LogWarning("More than two instances of PlayerController found in the scene. No changes saved!");
                     }
                 }
             }
 
             if (m_AutoSaveCamera)
             {
-                CameraController[] cameraManagers = (CameraController[])Object.FindObjectsOfType(typeof(CameraController));
+                CameraManager[] cameraManagers = (CameraManager[])Object.FindObjectsOfType(typeof(CameraManager));
                 if (cameraManagers.Length == 1)
                 {
                     GameObject cameraManagerPrefab = PrefabUtility.GetCorrespondingObjectFromOriginalSource(cameraManagers[0].gameObject);
@@ -506,24 +506,24 @@ namespace HyperCasual.Runner
                     }
                     else
                     {
-                        Debug.LogError("CameraController could not be found on a prefab instance. Changes could not be saved.");
+                        Debug.LogError("CameraManager could not be found on a prefab instance. Changes could not be saved.");
                     }
                 }
                 else
                 {
                     if (cameraManagers.Length == 0)
                     {
-                        Debug.LogWarning("No instance of CameraController found in the scene. No changes saved!");
+                        Debug.LogWarning("No instance of CameraManager found in the scene. No changes saved!");
                     }
-                    else
+                    else 
                     {
-                        Debug.LogWarning("More than two instances of CameraController found in the scene. No changes saved!");
+                        Debug.LogWarning("More than two instances of CameraManager found in the scene. No changes saved!");
                     }
                 }
             }
 
             // Set level definition dirty so the changes will be written to disk
-            EditorUtility.SetDirty(m_SourceLevelData);
+            EditorUtility.SetDirty(m_SourceLevelDefinition);
 
             // Write changes to disk
             AssetDatabase.SaveAssets();

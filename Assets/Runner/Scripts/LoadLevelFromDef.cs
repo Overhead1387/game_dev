@@ -1,37 +1,41 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using HyperCasual.Core;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace HyperCasual.Runner
 {
-    public class LoadLevelFromData : AbstractState
+    public class LoadLevelFromDef : AbstractState
     {
-        private readonly LevelData _levelData;
-            public LevelData m_LevelDefinition => _levelData; // Compatibility property
-        private readonly SceneController _sceneController;
-        private readonly GameObject[] _managerPrefabs;
+        public readonly LevelDefinition m_LevelDefinition;
+        readonly SceneController m_SceneController;
+        readonly GameObject[] m_ManagerPrefabs;
 
-        public LoadLevelFromData(SceneController sceneController, AbstractLevelData levelData, GameObject[] managerPrefabs)
+        public LoadLevelFromDef(SceneController sceneController, AbstractLevelData levelData, GameObject[] managerPrefabs)
         {
-            _levelData = levelData as LevelData;
-            _managerPrefabs = managerPrefabs;
-            _sceneController = sceneController;
-        }
+            if (levelData is LevelDefinition levelDefinition)
+                m_LevelDefinition = levelDefinition;
 
+            m_ManagerPrefabs = managerPrefabs;
+            m_SceneController = sceneController;
+        }
+        
         public override IEnumerator Execute()
         {
-            if (_levelData == null)
-                throw new Exception($"{nameof(_levelData)} is null!");
+            if (m_LevelDefinition == null)
+                throw new Exception($"{nameof(m_LevelDefinition)} is null!");
 
-            yield return _sceneController.LoadNewScene(_levelData.name);
+            yield return m_SceneController.LoadNewScene(nameof(m_LevelDefinition));
 
-            foreach (var prefab in _managerPrefabs)
+            // Load managers specific to the level
+            foreach (var prefab in m_ManagerPrefabs)
             {
                 Object.Instantiate(prefab);
             }
 
-            GameController.Instance.LoadLevel(_levelData);
+            GameManager.Instance.LoadLevel(m_LevelDefinition);
         }
     }
 }

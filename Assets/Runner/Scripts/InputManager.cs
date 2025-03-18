@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.EnhancedTouch;
@@ -5,19 +7,25 @@ using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 
 namespace HyperCasual.Runner
 {
-    public class InputController : MonoBehaviour
+    /// <summary>
+    /// A simple Input Manager for a Runner game.
+    /// </summary>
+    public class InputManager : MonoBehaviour
     {
-        public static InputController Instance => s_Instance;
-        private static InputController s_Instance;
+        /// <summary>
+        /// Returns the InputManager.
+        /// </summary>
+        public static InputManager Instance => s_Instance;
+        static InputManager s_Instance;
 
         [SerializeField]
-        private float _sensitivity = 1.5f;
+        float m_InputSensitivity = 1.5f;
 
-        private bool _hasInput;
-        private Vector3 _currentInputPosition;
-        private Vector3 _previousInputPosition;
+        bool m_HasInput;
+        Vector3 m_InputPosition;
+        Vector3 m_PreviousInputPosition;
 
-        private void Awake()
+        void Awake()
         {
             if (s_Instance != null && s_Instance != this)
             {
@@ -28,67 +36,68 @@ namespace HyperCasual.Runner
             s_Instance = this;
         }
 
-        private void OnEnable()
+        void OnEnable()
         {
             EnhancedTouchSupport.Enable();
         }
 
-        private void OnDisable()
+        void OnDisable()
         {
             EnhancedTouchSupport.Disable();
         }
 
-        private void Update()
+        void Update()
         {
-            if (Player.Instance == null)
+            if (PlayerController.Instance == null)
             {
                 return;
             }
 
 #if UNITY_EDITOR
-            _currentInputPosition = Mouse.current.position.ReadValue();
+            m_InputPosition = Mouse.current.position.ReadValue();
 
             if (Mouse.current.leftButton.isPressed)
             {
-                if (!_hasInput)
+                if (!m_HasInput)
                 {
-                    _previousInputPosition = _currentInputPosition;
+                    m_PreviousInputPosition = m_InputPosition;
                 }
-                _hasInput = true;
+                m_HasInput = true;
             }
             else
             {
-                _hasInput = false;
+                m_HasInput = false;
             }
 #else
             if (Touch.activeTouches.Count > 0)
             {
-                _currentInputPosition = Touch.activeTouches[0].screenPosition;
+                m_InputPosition = Touch.activeTouches[0].screenPosition;
 
-                if (!_hasInput)
+                if (!m_HasInput)
                 {
-                    _previousInputPosition = _currentInputPosition;
+                    m_PreviousInputPosition = m_InputPosition;
                 }
-
-                _hasInput = true;
+                
+                m_HasInput = true;
             }
             else
             {
-                _hasInput = false;
+                m_HasInput = false;
             }
 #endif
 
-            if (_hasInput)
+            if (m_HasInput)
             {
-                float normalizedDelta = (_currentInputPosition.x - _previousInputPosition.x) / Screen.width * _sensitivity;
-                Player.Instance.SetDeltaPosition(normalizedDelta);
+                float normalizedDeltaPosition = (m_InputPosition.x - m_PreviousInputPosition.x) / Screen.width * m_InputSensitivity;
+                PlayerController.Instance.SetDeltaPosition(normalizedDeltaPosition);
             }
             else
             {
-                Player.Instance.CancelMovement();
+                PlayerController.Instance.CancelMovement();
             }
 
-            _previousInputPosition = _currentInputPosition;
+            m_PreviousInputPosition = m_InputPosition;
         }
     }
 }
+

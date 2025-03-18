@@ -4,31 +4,38 @@ using UnityEngine;
 
 namespace HyperCasual.Runner
 {
+    /// <summary>
+    /// A class used to manage camera movement
+    /// in a Runner game.
+    /// </summary>
     [ExecuteInEditMode]
-    public class CameraController : MonoBehaviour
+    public class CameraManager : MonoBehaviour
     {
-        public static CameraController Instance => s_Instance;
-        private static CameraController s_Instance;
+        /// <summary>
+        /// Returns the CameraManager.
+        /// </summary>
+        public static CameraManager Instance => s_Instance;
+        static CameraManager s_Instance;
 
         [SerializeField]
-        private CameraViewPreset _viewPreset = CameraViewPreset.Behind;
+        CameraAnglePreset m_CameraAnglePreset = CameraAnglePreset.Behind;
 
         [SerializeField]
-        private Vector3 _positionOffset;
+        Vector3 m_Offset;
 
         [SerializeField]
-        private Vector3 _lookAtOffset;
+        Vector3 m_LookAtOffset;
 
         [SerializeField]
-        private bool _lockCameraPosition;
+        bool m_LockCameraPosition;
 
         [SerializeField]
-        private bool _smoothFollow;
+        bool m_SmoothCameraFollow;
 
         [SerializeField]
-        private float _smoothFollowStrength = 10.0f;
+        float m_SmoothCameraFollowStrength = 10.0f;
 
-        private enum CameraViewPreset
+        enum CameraAnglePreset
         {
             Behind,
             Overhead,
@@ -37,47 +44,49 @@ namespace HyperCasual.Runner
             Custom,
         }
 
-        private readonly Vector3[] _presetPositionOffsets = new Vector3[]
+        Vector3[] m_PresetOffsets = new Vector3[]
         {
-            new Vector3(0.0f, 5.0f, -9.0f),
-            new Vector3(0.0f, 9.0f, -5.0f),
-            new Vector3(5.0f, 5.0f, -8.0f),
-            new Vector3(0.0f, 1.0f, 0.0f),
-            Vector3.zero
+            new Vector3(0.0f, 5.0f, -9.0f), // Behind
+            new Vector3(0.0f, 9.0f, -5.0f), // Overhead
+            new Vector3(5.0f, 5.0f, -8.0f), // Side
+            new Vector3(0.0f, 1.0f, 0.0f),  // FirstPerson
+            Vector3.zero                    // Custom
         };
 
-        private readonly Vector3[] _presetLookAtOffsets = new Vector3[]
+        Vector3[] m_PresetLookAtOffsets = new Vector3[]
         {
-            new Vector3(0.0f, 2.0f, 6.0f),
-            new Vector3(0.0f, 0.0f, 4.0f),
-            new Vector3(-0.5f, 1.0f, 2.0f),
-            new Vector3(0.0f, 1.0f, 2.0f),
-            Vector3.zero
+            new Vector3(0.0f, 2.0f, 6.0f),  // Behind
+            new Vector3(0.0f, 0.0f, 4.0f),  // Overhead
+            new Vector3(-0.5f, 1.0f, 2.0f), // Side
+            new Vector4(0.0f, 1.0f, 2.0f),  // FirstPerson
+            Vector3.zero                    // Custom
         };
 
-        private readonly bool[] _presetLockCameraPositions = new bool[]
+        bool[] m_PresetLockCameraPosition = new bool[]
         {
-            false,
-            false,
-            true,
-            false,
-            false
+            false, // Behind
+            false, // Overhead
+            true,  // Side
+            false, // FirstPerson
+            false  // Custom
         };
 
-        private PlayerTransform _cameraTransform;
-        private static readonly Vector3 s_CenteredScale = new Vector3(0.0f, 1.0f, 1.0f);
+        Transform m_Transform;
+        Vector3 m_PrevLookAtOffset;
 
-        private void Awake()
+        static readonly Vector3 k_CenteredScale = new Vector3(0.0f, 1.0f, 1.0f);
+
+        void Awake()
         {
-            InitializeInstance();
+            SetupInstance();
         }
 
-        private void OnEnable()
+        void OnEnable()
         {
-            InitializeInstance();
+            SetupInstance();
         }
 
-        private void InitializeInstance()
+        void SetupInstance()
         {
             if (s_Instance != null && s_Instance != this)
             {
@@ -86,75 +95,86 @@ namespace HyperCasual.Runner
             }
 
             s_Instance = this;
-            _cameraTransform = PlayerTransform;
+            m_Transform = transform;
         }
 
+        /// <summary>
+        /// Reset the camera to its starting position relative
+        /// to the player.
+        /// </summary>
         public void ResetCamera()
         {
-            UpdateCameraPositionAndOrientation(false);
+            SetCameraPositionAndOrientation(false);
         }
 
-        private Vector3 GetPositionOffset()
+        Vector3 GetCameraOffset()
         {
-            return _presetPositionOffsets[(int)_viewPreset] + _positionOffset;
+            return m_PresetOffsets[(int)m_CameraAnglePreset] + m_Offset;
         }
 
-        private Vector3 GetLookAtOffset()
+        Vector3 GetCameraLookAtOffset()
         {
-            return _presetLookAtOffsets[(int)_viewPreset] + _lookAtOffset;
+            return m_PresetLookAtOffsets[(int)m_CameraAnglePreset] + m_LookAtOffset;
         }
 
-        private bool IsCameraLocked()
+        bool GetCameraLockStatus()
         {
-            return _lockCameraPosition || _presetLockCameraPositions[(int)_viewPreset];
-        }
-
-        private Vector3 GetPlayerPosition()
-        {
-            Vector3 playerPosition = Vector3.up;
-            if (Player.Instance != null)
+            if (m_LockCameraPosition)
             {
-                playerPosition = Player.Instance.GetPlayerTop();
+                return true;
             }
 
-            if (IsCameraLocked())
+            return m_PresetLockCameraPosition[(int)m_CameraAnglePreset];
+        }
+
+        Vector3 GetPlayerPosition()
+        {
+            Vector3 playerPosition = Vector3.up;
+            if (PlayerController.Instance != null) 
             {
-                playerPosition = Vector3.Scale(playerPosition, s_CenteredScale);
+                playerPosition = PlayerController.Instance.GetPlayerTop();
+            }
+
+            if (GetCameraLockStatus())
+            {
+                playerPosition = Vector3.Scale(playerPosition, k_CenteredScale);
             }
 
             return playerPosition;
         }
 
-        private void LateUpdate()
+        void LateUpdate()
         {
-            if (_cameraTransform == null)
+            if (m_Transform == null)
             {
                 return;
             }
 
-            UpdateCameraPositionAndOrientation(_smoothFollow);
+            SetCameraPositionAndOrientation(m_SmoothCameraFollow);
         }
 
-        private void UpdateCameraPositionAndOrientation(bool useSmoothFollow)
+        void SetCameraPositionAndOrientation(bool smoothCameraFollow)
         {
             Vector3 playerPosition = GetPlayerPosition();
-            Vector3 targetPosition = playerPosition + GetPositionOffset();
-            Vector3 targetLookAt = playerPosition + GetLookAtOffset();
 
-            if (useSmoothFollow)
+            Vector3 offset = playerPosition + GetCameraOffset();
+            Vector3 lookAtOffset = playerPosition + GetCameraLookAtOffset();
+
+            if (smoothCameraFollow)
             {
-                float lerpAmount = Time.deltaTime * _smoothFollowStrength;
+                float lerpAmound = Time.deltaTime * m_SmoothCameraFollowStrength;
 
-                _cameraTransform.position = Vector3.Lerp(_cameraTransform.position, targetPosition, lerpAmount);
-                _cameraTransform.LookAt(Vector3.Lerp(_cameraTransform.position + _cameraTransform.forward, targetLookAt, lerpAmount));
+                m_Transform.position = Vector3.Lerp(m_Transform.position, offset, lerpAmound);
+                m_Transform.LookAt(Vector3.Lerp(m_Transform.position + m_Transform.forward, lookAtOffset, lerpAmound));
 
-                _cameraTransform.position = new Vector3(_cameraTransform.position.x, _cameraTransform.position.y, targetPosition.z);
+                m_Transform.position = new Vector3(m_Transform.position.x, m_Transform.position.y, offset.z);
             }
             else
             {
-                _cameraTransform.position = targetPosition;
-                _cameraTransform.LookAt(targetLookAt);
+                m_Transform.position = playerPosition + GetCameraOffset();
+                m_Transform.LookAt(lookAtOffset);
             }
         }
     }
 }
+

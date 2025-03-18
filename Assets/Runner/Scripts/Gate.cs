@@ -4,77 +4,94 @@ using UnityEngine;
 
 namespace HyperCasual.Runner
 {
-    public class Portal : SpawnableEntity
+    /// <summary>
+    /// A class representing a Spawnable object.
+    /// If a GameObject tagged "Player" collides
+    /// with this object, it will trigger a fail
+    /// state with the GameManager.
+    /// </summary>
+    public class Gate : Spawnable
     {
-        private const string PlayerTag = "Player";
+        const string k_PlayerTag = "Player";
 
         [SerializeField]
-        private PortalEffect _effectType;
-
+        GateType m_GateType;
         [SerializeField]
-        private float _effectValue;
-
+        float m_Value;
         [SerializeField]
-        private RectTransform _label;
+        RectTransform m_Text;
 
-        private bool _isActivated;
-        private Vector3 _labelInitialScale;
+        bool m_Applied;
+        Vector3 m_TextInitialScale;
 
-        private enum PortalEffect
+        enum GateType
         {
-            ModifySpeed,
-            ModifySize,
+            ChangeSpeed,
+            ChangeSize,
         }
 
+        /// <summary>
+        /// Sets the local scale of this spawnable object
+        /// and ensures the Text attached to this gate
+        /// does not scale.
+        /// </summary>
+        /// <param name="scale">
+        /// The scale to apply to this spawnable object.
+        /// </param>
         public override void SetScale(Vector3 scale)
         {
-            if (_label != null)
+            // Ensure the text does not get scaled
+            if (m_Text != null)
             {
                 float xFactor = Mathf.Min(scale.y / scale.x, 1.0f);
                 float yFactor = Mathf.Min(scale.x / scale.y, 1.0f);
-                _label.localScale = Vector3.Scale(_labelInitialScale, new Vector3(xFactor, yFactor, 1.0f));
+                m_Text.localScale = Vector3.Scale(m_TextInitialScale, new Vector3(xFactor, yFactor, 1.0f));
 
-                _transform.localScale = scale;
+                m_Transform.localScale = scale;
             }
         }
 
-        public override void ResetEntity()
+        /// <summary>
+        /// Reset the gate to its initial state. Called when a level
+        /// is restarted by the GameManager.
+        /// </summary>
+        public override void ResetSpawnable()
         {
-            _isActivated = false;
+            m_Applied = false;
         }
 
         protected override void Awake()
         {
             base.Awake();
 
-            if (_label != null)
+            if (m_Text != null)
             {
-                _labelInitialScale = _label.localScale;
+                m_TextInitialScale = m_Text.localScale;
             }
         }
 
-        private void OnTriggerEnter(Collider other)
+        void OnTriggerEnter(Collider col)
         {
-            if (other.CompareTag(PlayerTag) && !_isActivated)
+            if (col.CompareTag(k_PlayerTag) && !m_Applied)
             {
-                ActivatePortal();
+                ActivateGate();
             }
         }
 
-        private void ActivatePortal()
+        void ActivateGate()
         {
-            switch (_effectType)
+            switch (m_GateType)
             {
-                case PortalEffect.ModifySpeed:
-                    Player.Instance.AdjustSpeed(_effectValue);
-                    break;
+                case GateType.ChangeSpeed:
+                    PlayerController.Instance.AdjustSpeed(m_Value);
+                break;
 
-                case PortalEffect.ModifySize:
-                    Player.Instance.AdjustScale(_effectValue);
-                    break;
+                case GateType.ChangeSize:
+                    PlayerController.Instance.AdjustScale(m_Value);
+                break;
             }
 
-            _isActivated = true;
+            m_Applied = true;
         }
     }
 }

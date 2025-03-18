@@ -1,19 +1,24 @@
+using System.Collections;
+using System.Collections.Generic;
 using HyperCasual.Core;
 using UnityEngine;
 
 namespace HyperCasual.Runner
 {
+    /// <summary>
+    /// Ends the game on collision, forcing a win state.
+    /// </summary>
     [ExecuteInEditMode]
     [RequireComponent(typeof(Collider))]
-    public class GoalLine : SpawnableEntity
+    public class FinishLine : Spawnable
     {
-        private const string PlayerTag = "Player";
-
-        private void OnTriggerEnter(Collider other)
+        const string k_PlayerTag = "Player";
+        
+        void OnTriggerEnter(Collider col)
         {
-            if (other.CompareTag(PlayerTag))
+            if (col.CompareTag(k_PlayerTag))
             {
-                GameController.Instance.OnVictory();
+                GameManager.Instance.Win();
             }
         }
     }

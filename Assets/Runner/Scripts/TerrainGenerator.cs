@@ -4,24 +4,64 @@ using UnityEngine;
 
 namespace HyperCasual.Runner
 {
-    public class TerrainBuilder : MonoBehaviour
+    /// <summary>
+    /// A class used to generate terrain for 
+    /// Runner levels.
+    /// </summary>
+    public class TerrainGenerator : MonoBehaviour
     {
+        /// <summary>
+        /// Contains all the measurements needed for the 
+        /// TerrainGenerator to create a new piece of Terrain.
+        /// </summary>
         public struct TerrainDimensions
         {
+            /// <summary>
+            /// Width of the terrain to generate.
+            /// </summary>
             public float Width;
+            
+            /// <summary>
+            /// Length of the terrain to generate.
+            /// </summary>
             public float Length;
+            
+            /// <summary>
+            /// Length of terrain to add before the start of the level.
+            /// </summary>
             public float StartBuffer;
+            
+            /// <summary>
+            /// Length of terrain to add after the end of the level.
+            /// </summary>
             public float EndBuffer;
+
+            /// <summary>
+            /// Thickness of the terrain to generate.
+            /// </summary>
             public float Thickness;
         }
 
-        public static void BuildTerrain(TerrainDimensions dimensions, Material terrainMaterial, ref GameObject terrainObject)
+        /// <summary>
+        /// Creates and instantiates a Terrain GameObject, built
+        /// with the specified width, length, and thickness.
+        /// </summary>
+        /// <param name="terrainDimensions">
+        /// The dimensions of the terrain to generate
+        /// </param>
+        /// <param name="terrainMaterial">
+        /// The material to apply to the terrain.
+        /// </param>
+        /// <param name="terrainGameObject">
+        /// A new GameObject that is created to hold the terrain.
+        /// </param>
+        public static void CreateTerrain(TerrainDimensions terrainDimensions, Material terrainMaterial, ref GameObject terrainGameObject)
         {
-            float width = dimensions.Width;
-            float length = dimensions.Length;
-            float startBuffer = dimensions.StartBuffer;
-            float endBuffer = dimensions.EndBuffer;
-            float thickness = dimensions.Thickness;
+            float width = terrainDimensions.Width;
+            float length = terrainDimensions.Length;
+            float startBuffer = terrainDimensions.StartBuffer;
+            float endBuffer = terrainDimensions.EndBuffer;
+            float thickness = terrainDimensions.Thickness;
 
             Mesh mesh = new Mesh();
             mesh.name = "Terrain";
@@ -31,18 +71,18 @@ namespace HyperCasual.Runner
             int[] triangles = new int[36];
 
             float halfWidth = width * 0.5f;
-            float startEdge = -startBuffer;
-            float endEdge = length + endBuffer;
+            float beginningOfStartBuffer = -startBuffer;
+            float endOfEndBuffer = length + endBuffer;
 
-            Vector3 upperStartLeft = new Vector3(-halfWidth, 0.0f, startEdge);
-            Vector3 upperStartRight = new Vector3(halfWidth, 0.0f, startEdge);
-            Vector3 lowerStartLeft = new Vector3(-halfWidth, -thickness, startEdge);
-            Vector3 lowerStartRight = new Vector3(halfWidth, -thickness, startEdge);
+            Vector3 upperStartLeft = new Vector3(-halfWidth, 0.0f, beginningOfStartBuffer);
+            Vector3 upperStartRight = new Vector3(halfWidth, 0.0f, beginningOfStartBuffer);
+            Vector3 lowerStartLeft = new Vector3(-halfWidth, -thickness, beginningOfStartBuffer);
+            Vector3 lowerStartRight = new Vector3(halfWidth, -thickness, beginningOfStartBuffer);
 
-            Vector3 upperEndLeft = new Vector3(-halfWidth, 0.0f, endEdge);
-            Vector3 upperEndRight = new Vector3(halfWidth, 0.0f, endEdge);
-            Vector3 lowerEndLeft = new Vector3(-halfWidth, -thickness, endEdge);
-            Vector3 lowerEndRight = new Vector3(halfWidth, -thickness, endEdge);
+            Vector3 upperEndLeft = new Vector3(-halfWidth, 0.0f, endOfEndBuffer);
+            Vector3 upperEndRight = new Vector3(halfWidth, 0.0f, endOfEndBuffer);
+            Vector3 lowerEndLeft = new Vector3(-halfWidth, -thickness, endOfEndBuffer);
+            Vector3 lowerEndRight = new Vector3(halfWidth, -thickness, endOfEndBuffer);
 
             Vector3 upNormal = Vector3.up;
             Vector3 rightNormal = Vector3.right;
@@ -54,6 +94,8 @@ namespace HyperCasual.Runner
             int vertexIndex = 0;
             int triangleIndex = 0;
 
+            // Top Plane
+
             vertices[vertexIndex + 0] = upperStartLeft;
             vertices[vertexIndex + 1] = upperEndLeft;
             vertices[vertexIndex + 2] = upperEndRight;
@@ -64,10 +106,10 @@ namespace HyperCasual.Runner
             normals[vertexIndex + 2] = upNormal;
             normals[vertexIndex + 3] = upNormal;
 
-            uvs[vertexIndex + 0] = new Vector2(0.0f, startEdge);
-            uvs[vertexIndex + 1] = new Vector2(0.0f, endEdge);
-            uvs[vertexIndex + 2] = new Vector2(1.0f, endEdge);
-            uvs[vertexIndex + 3] = new Vector2(1.0f, startEdge);
+            uvs[vertexIndex + 0] = new Vector2(0.0f, beginningOfStartBuffer);
+            uvs[vertexIndex + 1] = new Vector2(0.0f, endOfEndBuffer);
+            uvs[vertexIndex + 2] = new Vector2(1.0f, endOfEndBuffer);
+            uvs[vertexIndex + 3] = new Vector2(1.0f, beginningOfStartBuffer);
 
             triangles[triangleIndex + 0] = vertexIndex;
             triangles[triangleIndex + 1] = vertexIndex + 1;
@@ -80,6 +122,8 @@ namespace HyperCasual.Runner
             vertexIndex += 4;
             triangleIndex += 6;
 
+            // Bottom Plane
+
             vertices[vertexIndex + 0] = lowerStartLeft;
             vertices[vertexIndex + 1] = lowerEndLeft;
             vertices[vertexIndex + 2] = lowerEndRight;
@@ -90,10 +134,10 @@ namespace HyperCasual.Runner
             normals[vertexIndex + 2] = downNormal;
             normals[vertexIndex + 3] = downNormal;
 
-            uvs[vertexIndex + 0] = new Vector2(0.0f, startEdge);
-            uvs[vertexIndex + 1] = new Vector2(0.0f, endEdge);
-            uvs[vertexIndex + 2] = new Vector2(1.0f, endEdge);
-            uvs[vertexIndex + 3] = new Vector2(1.0f, startEdge);
+            uvs[vertexIndex + 0] = new Vector2(0.0f, beginningOfStartBuffer);
+            uvs[vertexIndex + 1] = new Vector2(0.0f, endOfEndBuffer);
+            uvs[vertexIndex + 2] = new Vector2(1.0f, endOfEndBuffer);
+            uvs[vertexIndex + 3] = new Vector2(1.0f, beginningOfStartBuffer);
 
             triangles[triangleIndex + 0] = vertexIndex;
             triangles[triangleIndex + 1] = vertexIndex + 2;
@@ -106,6 +150,8 @@ namespace HyperCasual.Runner
             vertexIndex += 4;
             triangleIndex += 6;
 
+            // Right Plane
+
             vertices[vertexIndex + 0] = upperStartRight;
             vertices[vertexIndex + 1] = upperEndRight;
             vertices[vertexIndex + 2] = lowerEndRight;
@@ -116,10 +162,10 @@ namespace HyperCasual.Runner
             normals[vertexIndex + 2] = rightNormal;
             normals[vertexIndex + 3] = rightNormal;
 
-            uvs[vertexIndex + 0] = new Vector2(1.0f, startEdge);
-            uvs[vertexIndex + 1] = new Vector2(1.0f, endEdge);
-            uvs[vertexIndex + 2] = new Vector2(1.0f - thickness, endEdge);
-            uvs[vertexIndex + 3] = new Vector2(1.0f - thickness, startEdge);
+            uvs[vertexIndex + 0] = new Vector2(1.0f, beginningOfStartBuffer);
+            uvs[vertexIndex + 1] = new Vector2(1.0f, endOfEndBuffer);
+            uvs[vertexIndex + 2] = new Vector2(1.0f - thickness, endOfEndBuffer);
+            uvs[vertexIndex + 3] = new Vector2(1.0f - thickness, beginningOfStartBuffer);
 
             triangles[triangleIndex + 0] = vertexIndex;
             triangles[triangleIndex + 1] = vertexIndex + 1;
@@ -131,6 +177,8 @@ namespace HyperCasual.Runner
 
             vertexIndex += 4;
             triangleIndex += 6;
+
+            // Left Plane
 
             vertices[vertexIndex + 0] = lowerStartLeft;
             vertices[vertexIndex + 1] = lowerEndLeft;
@@ -142,10 +190,10 @@ namespace HyperCasual.Runner
             normals[vertexIndex + 2] = leftNormal;
             normals[vertexIndex + 3] = leftNormal;
 
-            uvs[vertexIndex + 0] = new Vector2(-thickness, startEdge);
-            uvs[vertexIndex + 1] = new Vector2(-thickness, endEdge);
-            uvs[vertexIndex + 2] = new Vector2(0.0f, endEdge);
-            uvs[vertexIndex + 3] = new Vector2(0.0f, startEdge);
+            uvs[vertexIndex + 0] = new Vector2(-thickness, beginningOfStartBuffer);
+            uvs[vertexIndex + 1] = new Vector2(-thickness, endOfEndBuffer);
+            uvs[vertexIndex + 2] = new Vector2(0.0f, endOfEndBuffer);
+            uvs[vertexIndex + 3] = new Vector2(0.0f, beginningOfStartBuffer);
 
             triangles[triangleIndex + 0] = vertexIndex;
             triangles[triangleIndex + 1] = vertexIndex + 1;
@@ -157,6 +205,8 @@ namespace HyperCasual.Runner
 
             vertexIndex += 4;
             triangleIndex += 6;
+
+            // Start Plane
 
             vertices[vertexIndex + 0] = lowerStartLeft;
             vertices[vertexIndex + 1] = upperStartLeft;
@@ -184,6 +234,8 @@ namespace HyperCasual.Runner
             vertexIndex += 4;
             triangleIndex += 6;
 
+            // End Plane
+
             vertices[vertexIndex + 0] = lowerEndRight;
             vertices[vertexIndex + 1] = upperEndRight;
             vertices[vertexIndex + 2] = upperEndLeft;
@@ -194,14 +246,14 @@ namespace HyperCasual.Runner
             normals[vertexIndex + 2] = forwardNormal;
             normals[vertexIndex + 3] = forwardNormal;
 
+            triangles[triangleIndex + 0] = vertexIndex;
+            triangles[triangleIndex + 1] = vertexIndex + 1;
+            triangles[triangleIndex + 2] = vertexIndex + 2;
+
             uvs[vertexIndex + 0] = new Vector2(0.0f, 0.0f);
             uvs[vertexIndex + 1] = new Vector2(0.0f, thickness);
             uvs[vertexIndex + 2] = new Vector2(1.0f, thickness);
             uvs[vertexIndex + 3] = new Vector2(1.0f, 0.0f);
-
-            triangles[triangleIndex + 0] = vertexIndex;
-            triangles[triangleIndex + 1] = vertexIndex + 1;
-            triangles[triangleIndex + 2] = vertexIndex + 2;
 
             triangles[triangleIndex + 3] = vertexIndex;
             triangles[triangleIndex + 4] = vertexIndex + 2;
@@ -212,22 +264,22 @@ namespace HyperCasual.Runner
             mesh.triangles = triangles;
             mesh.uv = uvs;
 
-            if (terrainObject != null)
+            if (terrainGameObject != null)
             {
                 if (Application.isPlaying)
                 {
-                    Object.Destroy(terrainObject);
+                    Destroy(terrainGameObject);
                 }
                 else
                 {
-                    Object.DestroyImmediate(terrainObject);
+                    DestroyImmediate(terrainGameObject);
                 }
             }
 
-            terrainObject = new GameObject("Terrain");
-            MeshFilter meshFilter = terrainObject.AddComponent<MeshFilter>();
+            terrainGameObject = new GameObject("Terrain");
+            MeshFilter meshFilter = terrainGameObject.AddComponent<MeshFilter>();
             meshFilter.sharedMesh = mesh;
-            MeshRenderer meshRenderer = terrainObject.AddComponent<MeshRenderer>();
+            MeshRenderer meshRenderer = terrainGameObject.AddComponent<MeshRenderer>();
             meshRenderer.sharedMaterial = terrainMaterial;
         }
     }

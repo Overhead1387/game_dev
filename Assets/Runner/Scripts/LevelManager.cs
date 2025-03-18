@@ -4,52 +4,69 @@ using UnityEngine;
 
 namespace HyperCasual.Runner
 {
+    /// <summary>
+    /// A class used to hold a reference to the current
+    /// level and provide access to other classes.
+    /// </summary>
     [ExecuteInEditMode]
-    public class LevelLoader : MonoBehaviour
+    public class LevelManager : MonoBehaviour
     {
-        public static LevelLoader Instance => s_Instance;
-        private static LevelLoader s_Instance;
+        /// <summary>
+        /// Returns the LevelManager.
+        /// </summary>
+        public static LevelManager Instance => s_Instance;
+        static LevelManager s_Instance;
 
-        public LevelData Data
+        /// <summary>
+        /// Returns the LevelDefinition used to create this LevelManager.
+        /// </summary>
+        public LevelDefinition LevelDefinition
         {
-            get => _data;
-            set
+            get => m_LevelDefinition;
+            set 
             {
-                _data = value;
-                if (_data != null && Player.Instance != null)
+                m_LevelDefinition = value;
+
+                if (m_LevelDefinition != null && PlayerController.Instance != null)
                 {
-                    Player.Instance.SetMaxXPosition(_data.Width);
+                    PlayerController.Instance.SetMaxXPosition(m_LevelDefinition.LevelWidth);
                 }
             }
         }
-        private LevelData _data;
+        LevelDefinition m_LevelDefinition;
 
-        private readonly List<SpawnableEntity> _activeEntities = new List<SpawnableEntity>();
+        List<Spawnable> m_ActiveSpawnables = new List<Spawnable>();
 
-        public void AddEntity(SpawnableEntity entity)
+        /// <summary>
+        /// Call this method to add a Spawnable to the list of active Spawnables.
+        /// </summary>
+        public void AddSpawnable(Spawnable spawnable)
         {
-            _activeEntities.Add(entity);
+            m_ActiveSpawnables.Add(spawnable);
         }
 
-        public void ResetEntities()
+        /// <summary>
+        /// Calling this method calls the Reset() method on all Spawnables in this level.
+        /// </summary>
+        public void ResetSpawnables()
         {
-            foreach (SpawnableEntity entity in _activeEntities)
+            for (int i = 0, c = m_ActiveSpawnables.Count; i < c; i++)
             {
-                entity.ResetEntity();
+                m_ActiveSpawnables[i].ResetSpawnable();
             }
         }
 
-        private void Awake()
+        void Awake()
         {
-            InitializeInstance();
+            SetupInstance();
         }
 
-        private void OnEnable()
+        void OnEnable()
         {
-            InitializeInstance();
+            SetupInstance();
         }
 
-        private void InitializeInstance()
+        void SetupInstance()
         {
             if (s_Instance != null && s_Instance != this)
             {

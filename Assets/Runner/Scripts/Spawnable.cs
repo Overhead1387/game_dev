@@ -8,142 +8,190 @@ using UnityEditor;
 
 namespace HyperCasual.Runner
 {
+    /// <summary>
+    /// A base class for all objects which populate a
+    /// LevelDefinition. This class includes all logic 
+    /// necessary for snapping an object to a level's grid.
+    /// </summary>
     [ExecuteInEditMode]
-    public class SpawnableEntity : MonoBehaviour
+    public class Spawnable : MonoBehaviour
     {
-        protected PlayerTransform _PlayerTransform;
+        protected Transform m_Transform;
 
-        private LevelData _levelData;
-        private Vector3 _position;
-        private Color _baseColor;
-        private bool _snappedThisFrame;
-        private float _previousGridSize;
+        LevelDefinition m_LevelDefinition;
+        Vector3 m_Position;
+        Color m_BaseColor;
+        bool m_SnappedThisFrame;
+        float m_PreviousGridSize;
 
-        private MeshRenderer[] _meshRenderers;
+        MeshRenderer[] m_MeshRenderers;
 
         [SerializeField]
-        private bool _snapToGrid = true;
+        bool m_SnapToGrid = true;
 
-        public Vector3 SavedPosition => _position;
+        /// <summary>
+        /// The position of this Spawnable, as it is saved.
+        /// This value does not factor in any snapping.
+        /// </summary>
+        public Vector3 SavedPosition => m_Position;
 
-        public Color BaseColor => _baseColor;
+        /// <summary>
+        /// The base color to be applied to this Spawnable's
+        /// materials.
+        /// </summary>
+        public Color BaseColor => m_BaseColor;
 
         protected virtual void Awake()
         {
-            _PlayerTransform = PlayerTransform;
+            m_Transform = transform;
 
-            if (_meshRenderers == null || _meshRenderers.Length == 0)
+            if (m_MeshRenderers == null || m_MeshRenderers.Length == 0)
             {
-                _meshRenderers = gameObject.GetComponentsInChildren<MeshRenderer>();
+                m_MeshRenderers = gameObject.GetComponentsInChildren<MeshRenderer>();
             }
 
-            if (_meshRenderers != null && _meshRenderers.Length > 0)
+            if (m_MeshRenderers != null && m_MeshRenderers.Length > 0)
             {
-                _baseColor = _meshRenderers[0].sharedMaterial.color;
+                m_BaseColor = m_MeshRenderers[0].sharedMaterial.color;
             }
 
-            if (LevelLoader.Instance != null)
+            if (LevelManager.Instance != null)
             {
 #if UNITY_EDITOR
                 if (PrefabUtility.IsPartOfNonAssetPrefabInstance(gameObject))
 #endif
-                _PlayerTransform.SetParent(LevelLoader.Instance.PlayerTransform);
+                m_Transform.SetParent(LevelManager.Instance.transform);
             }
         }
 
+        /// <summary>
+        /// Sets the base color of this spawnable object's materials 
+        /// to baseColor.
+        /// </summary>
+        /// <param name="baseColor">
+        /// The color to apply to this spawnable object's materials.
+        /// </param>
         public virtual void SetBaseColor(Color baseColor)
         {
-            _baseColor = baseColor;
+            m_BaseColor = baseColor;
 
-            if (_meshRenderers == null || _meshRenderers.Length == 0)
+            if (m_MeshRenderers == null || m_MeshRenderers.Length == 0)
             {
-                _meshRenderers = gameObject.GetComponentsInChildren<MeshRenderer>();
+                m_MeshRenderers = gameObject.GetComponentsInChildren<MeshRenderer>();
             }
 
-            if (_meshRenderers != null)
+            if (m_MeshRenderers != null)
             {
-                foreach (MeshRenderer meshRenderer in _meshRenderers)
+                for (int i = 0; i < m_MeshRenderers.Length; i++)
                 {
+                    MeshRenderer meshRenderer = m_MeshRenderers[i];
+
                     if (meshRenderer != null)
                     {
                         Material material = new Material(meshRenderer.sharedMaterial);
-                        material.color = _baseColor;
+                        material.color = m_BaseColor;
                         meshRenderer.sharedMaterial = material;
                     }
                 }
             }
         }
 
+        /// <summary>
+        /// Sets the local scale of this spawnable object.
+        /// </summary>
+        /// <param name="scale">
+        /// The scale to apply to this spawnable object.
+        /// </param>
         public virtual void SetScale(Vector3 scale)
         {
-           _PlayerTransform.localScale = scale;
+           m_Transform.localScale = scale;
         }
 
-        public void SetLevelData(LevelData levelData)
+        /// <summary>
+        /// Link this spawnable object to the provided levelDefinition so it
+        /// can accurately snap to that levels grid if applicable.
+        /// </summary>
+        /// <param name="levelDefinition">
+        /// The LevelDefinition this SpawnableObject belongs to.
+        /// </param>
+        public void SetLevelDefinition(LevelDefinition levelDefinition)
         {
-            if (levelData == null)
+            if (levelDefinition == null)
             {
                 return;
             }
 
-            _levelData = levelData;
+            m_LevelDefinition = levelDefinition;
         }
 
-        public virtual void ResetEntity() {}
+        /// <summary>
+        /// This method can be overriden in classes that extend Spawnable
+        /// to hold any logic needed to reset that object to its default state.
+        /// </summary>
+        public virtual void ResetSpawnable() {}
 
         protected virtual void OnEnable()
         {
-            _PlayerTransform = PlayerTransform;
-            _position = _PlayerTransform.position;
-            _PlayerTransform.hasChanged = false;
+            m_Transform = transform;
+            m_Position = m_Transform.position;
+            m_Transform.hasChanged = false;
 
-            if (LevelLoader.Instance != null && !Application.isPlaying)
+            if (LevelManager.Instance != null && !Application.isPlaying)
             {
-                SetLevelData(LevelLoader.Instance.Data);
+                // Ensure level definition is set for spawnable prefabs
+                // created by the user while the level is open in the
+                // level editor.
+                SetLevelDefinition(LevelManager.Instance.LevelDefinition);
                 SnapToGrid();
             }
         }
 
         protected virtual void Update()
         {
-            if (!Application.isPlaying && _levelData != null)
+            if (!Application.isPlaying && m_LevelDefinition != null)
             {
-                if (_PlayerTransform.hasChanged)
+                if (m_Transform.hasChanged)
                 {
-                    _position = _PlayerTransform.position;
-                    _PlayerTransform.hasChanged = false;
+                    m_Position = m_Transform.position;
+                    m_Transform.hasChanged = false;
 
-                    if (_levelData.SnapToGrid)
+                    if (m_LevelDefinition.SnapToGrid)
                     {
                         SnapToGrid();
                     }
 
-                    SetScale(_PlayerTransform.localScale);
+                    SetScale(m_Transform.localScale);
                 }
-                else if (_previousGridSize != _levelData.GridSize)
+                else if (m_PreviousGridSize != m_LevelDefinition.GridSize)
                 {
                     SnapToGrid();
                 }
             }
         }
 
+        /// <summary>
+        /// If applicable, snap this spawnable object to the grid of the 
+        /// current LevelDefinition.
+        /// </summary>
         protected virtual void SnapToGrid()
         {
-            if (!_snapToGrid || _levelData == null)
+            if (!m_SnapToGrid || m_LevelDefinition == null)
             {
                 return;
             }
 
-            Vector3 position = _position;
+            Vector3 position = m_Position;
 
-            position.x = _levelData.GridSize * Mathf.Round(position.x / _levelData.GridSize);
-            position.z = _levelData.GridSize * Mathf.Round(position.z / _levelData.GridSize);
+            position.x = m_LevelDefinition.GridSize * Mathf.Round(position.x/m_LevelDefinition.GridSize);
+            position.z = m_LevelDefinition.GridSize * Mathf.Round(position.z/m_LevelDefinition.GridSize);
 
-            _PlayerTransform.position = position;
+            m_Transform.position = position;
 
-            _previousGridSize = _levelData.GridSize;
+            // Update previous grid size
+            m_PreviousGridSize = m_LevelDefinition.GridSize;
 
-            _PlayerTransform.hasChanged = false;
+            // Do not allow a snap to enable this flag
+            m_Transform.hasChanged = false;
         }
     }
 }

@@ -5,28 +5,51 @@ using UnityEngine;
 
 namespace HyperCasual.Runner
 {
-    public class Player : MonoBehaviour
+    /// <summary>
+    /// A class used to control a player in a Runner
+    /// game. Includes logic for player movement as well as 
+    /// other gameplay logic.
+    /// </summary>
+    public class PlayerController : MonoBehaviour
     {
-        public static Player Instance => s_Instance;
-        private static Player s_Instance;
+        /// <summary> Returns the PlayerController. </summary>
+        public static PlayerController Instance => s_Instance;
+        static PlayerController s_Instance;
 
-        [SerializeField] private Animator _animator;
-        [SerializeField] private SkinnedMeshRenderer _skinnedMeshRenderer;
-        [SerializeField] private PlayerSpeedPreset _speedPreset = PlayerSpeedPreset.Medium;
-        [SerializeField] private float _customSpeed = 10.0f;
-        [SerializeField] private float _acceleration = 10.0f;
-        [SerializeField] private float _deceleration = 20.0f;
-        [SerializeField] private float _horizontalSpeedFactor = 0.5f;
-        [SerializeField] private float _scaleVelocity = 2.0f;
-        [SerializeField] private bool _autoMoveForward = true;
+        [SerializeField]
+        Animator m_Animator;
 
-        private Vector3 _lastPosition;
-        private float _startHeight;
+        [SerializeField]
+        SkinnedMeshRenderer m_SkinnedMeshRenderer;
 
-        private const float MinimumScale = 0.1f;
-        private static readonly string SpeedParameter = "Speed";
+        [SerializeField]
+        PlayerSpeedPreset m_PlayerSpeed = PlayerSpeedPreset.Medium;
 
-        private enum PlayerSpeedPreset
+        [SerializeField]
+        float m_CustomPlayerSpeed = 10.0f;
+
+        [SerializeField]
+        float m_AccelerationSpeed = 10.0f;
+
+        [SerializeField]
+        float m_DecelerationSpeed = 20.0f;
+
+        [SerializeField]
+        float m_HorizontalSpeedFactor = 0.5f;
+
+        [SerializeField]
+        float m_ScaleVelocity = 2.0f;
+
+        [SerializeField]
+        bool m_AutoMoveForward = true;
+
+        Vector3 m_LastPosition;
+        float m_StartHeight;
+
+        const float k_MinimumScale = 0.1f;
+        static readonly string s_Speed = "Speed";
+
+        enum PlayerSpeedPreset
         {
             Slow,
             Medium,
@@ -34,33 +57,52 @@ namespace HyperCasual.Runner
             Custom
         }
 
-        private PlayerTransform _PlayerTransform;
-        private Vector3 _startPosition;
-        private bool _hasInput;
-        private float _maxXPosition;
-        private float _xPosition;
-        private float _zPosition;
-        private float _targetXPosition;
-        private float _currentSpeed;
-        private float _targetSpeed;
-        private Vector3 _currentScale;
-        private Vector3 _targetScale;
-        private Vector3 _defaultScale;
+        Transform m_Transform;
+        Vector3 m_StartPosition;
+        bool m_HasInput;
+        float m_MaxXPosition;
+        float m_XPos;
+        float m_ZPos;
+        float m_TargetPosition;
+        float m_Speed;
+        float m_TargetSpeed;
+        Vector3 m_Scale;
+        Vector3 m_TargetScale;
+        Vector3 m_DefaultScale;
 
-        private const float HalfWidth = 0.5f;
+        const float k_HalfWidth = 0.5f;
 
-        public PlayerTransform PlayerTransform => _PlayerTransform;
-        public float CurrentSpeed => _currentSpeed;
-        public float TargetSpeed => _targetSpeed;
-        public float MinimumScaleValue => MinimumScale;
-        public Vector3 CurrentScale => _currentScale;
-        public Vector3 TargetScale => _targetScale;
-        public Vector3 DefaultScale => _defaultScale;
-        public float StartHeight => _startHeight;
-        public float TargetXPosition => _targetXPosition;
-        public float MaxXPosition => _maxXPosition;
+        /// <summary> The player's root Transform component. </summary>
+        public Transform Transform => m_Transform;
 
-        private void Awake()
+        /// <summary> The player's current speed. </summary>
+        public float Speed => m_Speed;
+
+        /// <summary> The player's target speed. </summary>
+        public float TargetSpeed => m_TargetSpeed;
+
+        /// <summary> The player's minimum possible local scale. </summary>
+        public float MinimumScale => k_MinimumScale;
+
+        /// <summary> The player's current local scale. </summary>
+        public Vector3 Scale => m_Scale;
+
+        /// <summary> The player's target local scale. </summary>
+        public Vector3 TargetScale => m_TargetScale;
+
+        /// <summary> The player's default local scale. </summary>
+        public Vector3 DefaultScale => m_DefaultScale;
+
+        /// <summary> The player's default local height. </summary>
+        public float StartHeight => m_StartHeight;
+
+        /// <summary> The player's default local height. </summary>
+        public float TargetPosition => m_TargetPosition;
+
+        /// <summary> The player's maximum X position. </summary>
+        public float MaxXPosition => m_MaxXPosition;
+
+        void Awake()
         {
             if (s_Instance != null && s_Instance != this)
             {
@@ -69,145 +111,226 @@ namespace HyperCasual.Runner
             }
 
             s_Instance = this;
+
             Initialize();
         }
 
+        /// <summary>
+        /// Set up all necessary values for the PlayerController.
+        /// </summary>
         public void Initialize()
         {
-            _PlayerTransform = PlayerTransform;
-            _startPosition = _PlayerTransform.position;
-            _defaultScale = _PlayerTransform.localScale;
-            _currentScale = _defaultScale;
-            _targetScale = _currentScale;
+            m_Transform = transform;
+            m_StartPosition = m_Transform.position;
+            m_DefaultScale = m_Transform.localScale;
+            m_Scale = m_DefaultScale;
+            m_TargetScale = m_Scale;
 
-            _startHeight = _skinnedMeshRenderer != null ? _skinnedMeshRenderer.bounds.size.y : 1.0f;
+            if (m_SkinnedMeshRenderer != null)
+            {
+                m_StartHeight = m_SkinnedMeshRenderer.bounds.size.y;
+            }
+            else 
+            {
+                m_StartHeight = 1.0f;
+            }
 
             ResetSpeed();
         }
 
+        /// <summary>
+        /// Returns the current default speed based on the currently
+        /// selected PlayerSpeed preset.
+        /// </summary>
         public float GetDefaultSpeed()
         {
-            switch (_speedPreset)
+            switch (m_PlayerSpeed)
             {
-                case PlayerSpeedPreset.Slow: return 5.0f;
-                case PlayerSpeedPreset.Medium: return 10.0f;
-                case PlayerSpeedPreset.Fast: return 20.0f;
-                default: return _customSpeed;
+                case PlayerSpeedPreset.Slow:
+                    return 5.0f;
+
+                case PlayerSpeedPreset.Medium:
+                    return 10.0f;
+
+                case PlayerSpeedPreset.Fast:
+                    return 20.0f;
             }
+
+            return m_CustomPlayerSpeed;
         }
 
+        /// <summary>
+        /// Adjust the player's current speed
+        /// </summary>
         public void AdjustSpeed(float speed)
         {
-            _targetSpeed += speed;
-            _targetSpeed = Mathf.Max(0.0f, _targetSpeed);
+            m_TargetSpeed += speed;
+            m_TargetSpeed = Mathf.Max(0.0f, m_TargetSpeed);
         }
 
+        /// <summary>
+        /// Reset the player's current speed to their default speed
+        /// </summary>
         public void ResetSpeed()
         {
-            _currentSpeed = 0.0f;
-            _targetSpeed = GetDefaultSpeed();
+            m_Speed = 0.0f;
+            m_TargetSpeed = GetDefaultSpeed();
         }
 
+        /// <summary>
+        /// Adjust the player's current scale
+        /// </summary>
         public void AdjustScale(float scale)
         {
-            _targetScale += Vector3.one * scale;
-            _targetScale = Vector3.Max(_targetScale, Vector3.one * MinimumScale);
+            m_TargetScale += Vector3.one * scale;
+            m_TargetScale = Vector3.Max(m_TargetScale, Vector3.one * k_MinimumScale);
         }
 
+        /// <summary>
+        /// Reset the player's current speed to their default speed
+        /// </summary>
         public void ResetScale()
         {
-            _currentScale = _defaultScale;
-            _targetScale = _defaultScale;
+            m_Scale = m_DefaultScale;
+            m_TargetScale = m_DefaultScale;
         }
 
+        /// <summary>
+        /// Returns the player's transform component
+        /// </summary>
         public Vector3 GetPlayerTop()
         {
-            return _PlayerTransform.position + Vector3.up * (_startHeight * _currentScale.y - _startHeight);
+            return m_Transform.position + Vector3.up * (m_StartHeight * m_Scale.y - m_StartHeight);
         }
 
-        public void SetDeltaPosition(float normalizedDelta)
+        /// <summary>
+        /// Sets the target X position of the player
+        /// </summary>
+        public void SetDeltaPosition(float normalizedDeltaPosition)
         {
-            if (_maxXPosition == 0.0f)
+            if (m_MaxXPosition == 0.0f)
+            {
                 Debug.LogError("Player cannot move because SetMaxXPosition has never been called or Level Width is 0. If you are in the LevelEditor scene, ensure a level has been loaded in the LevelEditor Window!");
+            }
 
-            float fullWidth = _maxXPosition * 2.0f;
-            _targetXPosition = _targetXPosition + fullWidth * normalizedDelta;
-            _targetXPosition = Mathf.Clamp(_targetXPosition, -_maxXPosition, _maxXPosition);
-            _hasInput = true;
+            float fullWidth = m_MaxXPosition * 2.0f;
+            m_TargetPosition = m_TargetPosition + fullWidth * normalizedDeltaPosition;
+            m_TargetPosition = Mathf.Clamp(m_TargetPosition, -m_MaxXPosition, m_MaxXPosition);
+            m_HasInput = true;
         }
 
+        /// <summary>
+        /// Stops player movement
+        /// </summary>
         public void CancelMovement()
         {
-            _hasInput = false;
+            m_HasInput = false;
         }
 
+        /// <summary>
+        /// Set the level width to keep the player constrained
+        /// </summary>
         public void SetMaxXPosition(float levelWidth)
         {
-            _maxXPosition = levelWidth * HalfWidth;
+            // Level is centered at X = 0, so the maximum player
+            // X position is half of the level width
+            m_MaxXPosition = levelWidth * k_HalfWidth;
         }
 
+        /// <summary>
+        /// Returns player to their starting position
+        /// </summary>
         public void ResetPlayer()
         {
-            _PlayerTransform.position = _startPosition;
-            _xPosition = 0.0f;
-            _zPosition = _startPosition.z;
-            _targetXPosition = 0.0f;
-            _lastPosition = _PlayerTransform.position;
-            _hasInput = false;
+            m_Transform.position = m_StartPosition;
+            m_XPos = 0.0f;
+            m_ZPos = m_StartPosition.z;
+            m_TargetPosition = 0.0f;
+
+            m_LastPosition = m_Transform.position;
+
+            m_HasInput = false;
+
             ResetSpeed();
             ResetScale();
         }
 
-        private void Update()
+        void Update()
         {
             float deltaTime = Time.deltaTime;
 
-            if (!Approximately(_PlayerTransform.localScale, _targetScale))
+            // Update Scale
+
+            if (!Approximately(m_Transform.localScale, m_TargetScale))
             {
-                _currentScale = Vector3.Lerp(_currentScale, _targetScale, deltaTime * _scaleVelocity);
-                _PlayerTransform.localScale = _currentScale;
+                m_Scale = Vector3.Lerp(m_Scale, m_TargetScale, deltaTime * m_ScaleVelocity);
+                m_Transform.localScale = m_Scale;
             }
 
-            if (!_autoMoveForward && !_hasInput)
+            // Update Speed
+
+            if (!m_AutoMoveForward && !m_HasInput)
+            {
                 Decelerate(deltaTime, 0.0f);
-            else if (_targetSpeed < _currentSpeed)
-                Decelerate(deltaTime, _targetSpeed);
-            else if (_targetSpeed > _currentSpeed)
-                Accelerate(deltaTime, _targetSpeed);
-
-            float speed = _currentSpeed * deltaTime;
-            _zPosition += speed;
-
-            if (_hasInput)
+            }
+            else if (m_TargetSpeed < m_Speed)
             {
-                float horizontalSpeed = speed * _horizontalSpeedFactor;
-                float newPositionTarget = Mathf.Lerp(_xPosition, _targetXPosition, horizontalSpeed);
-                float newPositionDifference = Mathf.Clamp(newPositionTarget - _xPosition, -horizontalSpeed, horizontalSpeed);
-                _xPosition += newPositionDifference;
+                Decelerate(deltaTime, m_TargetSpeed);
+            }
+            else if (m_TargetSpeed > m_Speed)
+            {
+                Accelerate(deltaTime, m_TargetSpeed);
             }
 
-            _PlayerTransform.position = new Vector3(_xPosition, _PlayerTransform.position.y, _zPosition);
+            float speed = m_Speed * deltaTime;
 
-            if (_animator != null && deltaTime > 0.0f)
-                _animator.SetFloat(SpeedParameter, (_PlayerTransform.position - _lastPosition).magnitude / deltaTime);
+            // Update position
 
-            if (_PlayerTransform.position != _lastPosition)
-                _PlayerTransform.forward = Vector3.Lerp(_PlayerTransform.forward, (_PlayerTransform.position - _lastPosition).normalized, speed);
+            m_ZPos += speed;
 
-            _lastPosition = _PlayerTransform.position;
+            if (m_HasInput)
+            {
+                float horizontalSpeed = speed * m_HorizontalSpeedFactor;
+
+                float newPositionTarget = Mathf.Lerp(m_XPos, m_TargetPosition, horizontalSpeed);
+                float newPositionDifference = newPositionTarget - m_XPos;
+
+                newPositionDifference = Mathf.Clamp(newPositionDifference, -horizontalSpeed, horizontalSpeed);
+
+                m_XPos += newPositionDifference;
+            }
+
+            m_Transform.position = new Vector3(m_XPos, m_Transform.position.y, m_ZPos);
+
+            if (m_Animator != null && deltaTime > 0.0f)
+            {
+                float distanceTravelledSinceLastFrame = (m_Transform.position - m_LastPosition).magnitude;
+                float distancePerSecond = distanceTravelledSinceLastFrame / deltaTime;
+
+                m_Animator.SetFloat(s_Speed, distancePerSecond);
+            }
+
+            if (m_Transform.position != m_LastPosition)
+            {
+                m_Transform.forward = Vector3.Lerp(m_Transform.forward, (m_Transform.position - m_LastPosition).normalized, speed);
+            }
+
+            m_LastPosition = m_Transform.position;
         }
 
-        private void Accelerate(float deltaTime, float targetSpeed)
+        void Accelerate(float deltaTime, float targetSpeed)
         {
-            _currentSpeed = Mathf.Min(_currentSpeed + deltaTime * _acceleration, targetSpeed);
+            m_Speed += deltaTime * m_AccelerationSpeed;
+            m_Speed = Mathf.Min(m_Speed, targetSpeed);
         }
 
-        private void Decelerate(float deltaTime, float targetSpeed)
+        void Decelerate(float deltaTime, float targetSpeed)
         {
-            _currentSpeed = Mathf.Max(_currentSpeed - deltaTime * _deceleration, targetSpeed);
+            m_Speed -= deltaTime * m_DecelerationSpeed;
+            m_Speed = Mathf.Max(m_Speed, targetSpeed);
         }
 
-        private bool Approximately(Vector3 a, Vector3 b)
+        bool Approximately(Vector3 a, Vector3 b)
         {
             return Mathf.Approximately(a.x, b.x) && Mathf.Approximately(a.y, b.y) && Mathf.Approximately(a.z, b.z);
         }
