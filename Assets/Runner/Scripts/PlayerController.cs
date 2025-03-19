@@ -69,6 +69,14 @@ namespace HyperCasual.Runner
         Vector3 m_Scale;
         Vector3 m_TargetScale;
         Vector3 m_DefaultScale;
+        Vector3 m_CurrentVelocity;
+        
+        // Cached component references
+        Rigidbody m_Rigidbody;
+        
+        // Constants for performance optimization
+        private const float k_MinSpeed = 0.0f;
+        private const float k_VelocitySmoothTime = 0.1f;
 
         const float k_HalfWidth = 0.5f;
 
@@ -112,6 +120,7 @@ namespace HyperCasual.Runner
 
             s_Instance = this;
 
+            m_Rigidbody = GetComponent<Rigidbody>();
             Initialize();
         }
 

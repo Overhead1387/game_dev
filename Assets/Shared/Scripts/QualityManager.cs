@@ -6,16 +6,13 @@ using UnityEngine;
 
 namespace HyperCasual.Runner
 {
-    /// <summary>
-    /// This singleton provides functionality to modify quality settings in runtime
-    /// </summary>
+    // Manages game quality settings at runtime using the Singleton pattern
+    // Provides centralized control over graphics quality levels and persistence
     public class QualityManager : AbstractSingleton<QualityManager>
     {
-        int m_QualityLevel;
+        private int m_QualityLevel;    // Current quality level setting
 
-        /// <summary>
-        /// The current value of quality level
-        /// </summary>
+        // Property to get/set quality level and apply changes immediately
         public int QualityLevel
         {
             get => m_QualityLevel;

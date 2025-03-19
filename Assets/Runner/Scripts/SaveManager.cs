@@ -26,7 +26,13 @@ namespace HyperCasual.Runner
 
         void Awake()
         {
+            if (s_Instance != null && s_Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
             s_Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
 
         /// <summary>

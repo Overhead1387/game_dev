@@ -51,13 +51,30 @@ namespace HyperCasual.Runner
         
         protected virtual void OnClick()
         {
+            if (!m_Button.interactable)
+                return;
+                
+            m_Button.interactable = false;
             m_Action?.Invoke();
             PlayButtonSound();
+            StartCoroutine(ReenableButton());
         }
 
         protected void PlayButtonSound()
         {
-            AudioManager.Instance.PlayEffect(m_ButtonSound);
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlayEffect(m_ButtonSound);
+            }
+        }
+
+        IEnumerator ReenableButton()
+        {
+            yield return new WaitForSeconds(0.1f);
+            if (m_Button != null)
+            {
+                m_Button.interactable = true;
+            }
         }
     }
 }

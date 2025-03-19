@@ -44,17 +44,29 @@ namespace HyperCasual.Runner
         protected virtual void Awake()
         {
             m_Transform = transform;
+            CacheMeshRenderers();
+            SetInitialBaseColor();
+            SetParentToLevelManager();
+        }
 
+        private void CacheMeshRenderers()
+        {
             if (m_MeshRenderers == null || m_MeshRenderers.Length == 0)
             {
                 m_MeshRenderers = gameObject.GetComponentsInChildren<MeshRenderer>();
             }
+        }
 
+        private void SetInitialBaseColor()
+        {
             if (m_MeshRenderers != null && m_MeshRenderers.Length > 0)
             {
                 m_BaseColor = m_MeshRenderers[0].sharedMaterial.color;
             }
+        }
 
+        private void SetParentToLevelManager()
+        {
             if (LevelManager.Instance != null)
             {
 #if UNITY_EDITOR
@@ -74,25 +86,24 @@ namespace HyperCasual.Runner
         public virtual void SetBaseColor(Color baseColor)
         {
             m_BaseColor = baseColor;
+            CacheMeshRenderers();
+            ApplyBaseColorToMaterials();
+        }
 
-            if (m_MeshRenderers == null || m_MeshRenderers.Length == 0)
-            {
-                m_MeshRenderers = gameObject.GetComponentsInChildren<MeshRenderer>();
-            }
+        private void ApplyBaseColorToMaterials()
+        {
+            if (m_MeshRenderers == null) return;
 
-            if (m_MeshRenderers != null)
+            for (int i = 0; i < m_MeshRenderers.Length; i++)
             {
-                for (int i = 0; i < m_MeshRenderers.Length; i++)
+                MeshRenderer meshRenderer = m_MeshRenderers[i];
+                if (meshRenderer == null) continue;
+
+                Material material = new Material(meshRenderer.sharedMaterial)
                 {
-                    MeshRenderer meshRenderer = m_MeshRenderers[i];
-
-                    if (meshRenderer != null)
-                    {
-                        Material material = new Material(meshRenderer.sharedMaterial);
-                        material.color = m_BaseColor;
-                        meshRenderer.sharedMaterial = material;
-                    }
-                }
+                    color = m_BaseColor
+                };
+                meshRenderer.sharedMaterial = material;
             }
         }
 

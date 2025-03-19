@@ -7,7 +7,9 @@ using UnityEngine.UI;
 namespace HyperCasual.Runner
 {
     /// <summary>
-    /// This View contains Game-over Screen functionalities
+    /// Manages the game over screen UI and its interactions.
+    /// Handles play again and main menu navigation events.
+    /// Inherits from View for UI management integration.
     /// </summary>
     public class GameoverScreen : View
     {
@@ -20,26 +22,54 @@ namespace HyperCasual.Runner
         [SerializeField]
         AbstractGameEvent m_GoToMainMenuEvent;
 
+        protected override void Awake()
+        {
+            base.Awake();
+            ValidateReferences();
+        }
+
+        void ValidateReferences()
+        {
+            if (m_PlayAgainButton == null)
+                Debug.LogError($"[{nameof(GameoverScreen)}] Play Again Button reference is missing");
+            if (m_GoToMainMenuButton == null)
+                Debug.LogError($"[{nameof(GameoverScreen)}] Go To Main Menu Button reference is missing");
+            if (m_PlayAgainEvent == null)
+                Debug.LogError($"[{nameof(GameoverScreen)}] Play Again Event reference is missing");
+            if (m_GoToMainMenuEvent == null)
+                Debug.LogError($"[{nameof(GameoverScreen)}] Go To Main Menu Event reference is missing");
+        }
+
         void OnEnable()
         {
-            m_PlayAgainButton.AddListener(OnPlayAgainButtonClick);
-            m_GoToMainMenuButton.AddListener(OnGoToMainMenuButtonClick);
+            if (m_PlayAgainButton != null)
+                m_PlayAgainButton.AddListener(OnPlayAgainButtonClick);
+            if (m_GoToMainMenuButton != null)
+                m_GoToMainMenuButton.AddListener(OnGoToMainMenuButtonClick);
         }
 
         void OnDisable()
         {
-            m_PlayAgainButton.RemoveListener(OnPlayAgainButtonClick);
-            m_GoToMainMenuButton.RemoveListener(OnGoToMainMenuButtonClick);
+            if (m_PlayAgainButton != null)
+                m_PlayAgainButton.RemoveListener(OnPlayAgainButtonClick);
+            if (m_GoToMainMenuButton != null)
+                m_GoToMainMenuButton.RemoveListener(OnGoToMainMenuButtonClick);
         }
 
         void OnPlayAgainButtonClick()
         {
-            m_PlayAgainEvent.Raise();
+            if (m_PlayAgainEvent != null)
+                m_PlayAgainEvent.Raise();
+            else
+                Debug.LogWarning($"[{nameof(GameoverScreen)}] Play Again Event is null");
         }
 
         void OnGoToMainMenuButtonClick()
         {
-            m_GoToMainMenuEvent.Raise();
+            if (m_GoToMainMenuEvent != null)
+                m_GoToMainMenuEvent.Raise();
+            else
+                Debug.LogWarning($"[{nameof(GameoverScreen)}] Go To Main Menu Event is null");
         }
     }
 }

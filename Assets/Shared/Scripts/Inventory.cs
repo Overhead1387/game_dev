@@ -7,35 +7,24 @@ using UnityEngine;
 
 namespace HyperCasual.Runner
 {
-    /// <summary>
-    /// A simple inventory class that listens to game events and keeps track of the amount of in-game currencies
-    /// collected by the player
-    /// </summary>
+    // Manages player's in-game resources (gold, XP, keys) and handles resource-related events
+    // Implements Singleton pattern for global access to inventory state
     public class Inventory : AbstractSingleton<Inventory>
     {
-        [SerializeField]
-        GenericGameEventListener m_GoldEventListener;
-        [SerializeField]
-        GenericGameEventListener m_KeyEventListener;
-        [SerializeField]
-        GenericGameEventListener m_WinEventListener;
-        [SerializeField]
-        GenericGameEventListener m_LoseEventListener;
+        [SerializeField] private GenericGameEventListener m_GoldEventListener;  // Listens for gold collection events
+        [SerializeField] private GenericGameEventListener m_KeyEventListener;    // Listens for key collection events
+        [SerializeField] private GenericGameEventListener m_WinEventListener;    // Handles level completion
+        [SerializeField] private GenericGameEventListener m_LoseEventListener;   // Handles level failure
 
-        int m_TempGold;
-        int m_TotalGold;
-        float m_TempXp;
-        float m_TotalXp;
-        int m_TempKeys;
+        private int m_TempGold;    // Current level gold count
+        private int m_TotalGold;   // Total accumulated gold
+        private float m_TempXp;    // Current level XP
+        private float m_TotalXp;   // Total accumulated XP
+        private int m_TempKeys;    // Current level key count
 
-        /// <summary>
-        /// Temporary const
-        /// Users keep accumulating XP when playing the game and they're rewarded as they hit a milestone.
-        /// Milestones are simply a threshold to reward users for playing the game. We need to come up with
-        /// a proper formula to calculate milestone values but because we don't have a plan for the milestone
-        /// rewards yet, we have simple set the value to something users can never reach. 
-        /// </summary>
-        const float k_MilestoneFactor = 1.2f;
+        // Multiplier for XP milestone calculations
+        // TODO: Implement proper milestone calculation formula based on game progression
+        private const float k_MilestoneFactor = 1.2f;
 
         Hud m_Hud;
         LevelCompleteScreen m_LevelCompleteScreen;
@@ -126,7 +115,8 @@ namespace HyperCasual.Runner
 
         void Update()
         {
-            if (m_Hud.gameObject.activeSelf)
+            // Only update XP when HUD is visible to optimize performance
+            if (m_Hud != null && m_Hud.gameObject.activeSelf)
             {
                 m_TempXp += PlayerController.Instance.Speed * Time.deltaTime;
                 m_Hud.XpValue = m_TempXp;

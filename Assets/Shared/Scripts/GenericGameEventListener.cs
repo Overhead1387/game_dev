@@ -23,6 +23,11 @@ namespace HyperCasual.Core
         /// </summary>
         public void Subscribe()
         {
+            if (m_Event == null)
+            {
+                Debug.LogError("Cannot subscribe - Event is null");
+                return;
+            }
             m_Event.AddListener(this);
         }
 
@@ -31,6 +36,11 @@ namespace HyperCasual.Core
         /// </summary>
         public void Unsubscribe()
         {
+            if (m_Event == null)
+            {
+                Debug.LogError("Cannot unsubscribe - Event is null");
+                return;
+            }
             m_Event.RemoveListener(this);
         }
         

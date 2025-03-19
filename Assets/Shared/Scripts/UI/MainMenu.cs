@@ -19,36 +19,81 @@ namespace HyperCasual.Runner
         [SerializeField]
         AbstractGameEvent m_StartButtonEvent;
 
+        protected override void Awake()
+        {
+            base.Awake();
+            ValidateReferences();
+        }
+
+        void ValidateReferences()
+        {
+            if (m_StartButton == null)
+                Debug.LogError($"[{nameof(MainMenu)}] Start Button reference is missing");
+            if (m_SettingsButton == null)
+                Debug.LogError($"[{nameof(MainMenu)}] Settings Button reference is missing");
+            if (m_ShopButton == null)
+                Debug.LogError($"[{nameof(MainMenu)}] Shop Button reference is missing");
+            if (m_StartButtonEvent == null)
+                Debug.LogError($"[{nameof(MainMenu)}] Start Button Event reference is missing");
+        }
+
         void OnEnable()
         {
-            m_StartButton.AddListener(OnStartButtonClick);
-            m_SettingsButton.AddListener(OnSettingsButtonClick);
-            m_ShopButton.AddListener(OnShopButtonClick);
+            if (m_StartButton != null)
+                m_StartButton.AddListener(OnStartButtonClick);
+            if (m_SettingsButton != null)
+                m_SettingsButton.AddListener(OnSettingsButtonClick);
+            if (m_ShopButton != null)
+                m_ShopButton.AddListener(OnShopButtonClick);
         }
         
         void OnDisable()
         {
-            m_StartButton.RemoveListener(OnStartButtonClick);
-            m_SettingsButton.RemoveListener(OnSettingsButtonClick);
-            m_ShopButton.RemoveListener(OnShopButtonClick);
+            if (m_StartButton != null)
+                m_StartButton.RemoveListener(OnStartButtonClick);
+            if (m_SettingsButton != null)
+                m_SettingsButton.RemoveListener(OnSettingsButtonClick);
+            if (m_ShopButton != null)
+                m_ShopButton.RemoveListener(OnShopButtonClick);
         }
 
         void OnStartButtonClick()
         {
-            m_StartButtonEvent.Raise();
-            AudioManager.Instance.PlayEffect(SoundID.ButtonSound);
+            if (m_StartButtonEvent != null)
+                m_StartButtonEvent.Raise();
+            else
+                Debug.LogWarning($"[{nameof(MainMenu)}] Start Button Event is null");
+
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlayEffect(SoundID.ButtonSound);
+            else
+                Debug.LogWarning($"[{nameof(MainMenu)}] AudioManager instance is null");
         }
 
         void OnSettingsButtonClick()
         {
-            UIManager.Instance.Show<SettingsMenu>();
-            AudioManager.Instance.PlayEffect(SoundID.ButtonSound);
+            if (UIManager.Instance != null)
+                UIManager.Instance.Show<SettingsMenu>();
+            else
+                Debug.LogError($"[{nameof(MainMenu)}] UIManager instance is null");
+
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlayEffect(SoundID.ButtonSound);
+            else
+                Debug.LogWarning($"[{nameof(MainMenu)}] AudioManager instance is null");
         }
 
         void OnShopButtonClick()
         {
-            UIManager.Instance.Show<ShopView>();
-            AudioManager.Instance.PlayEffect(SoundID.ButtonSound);
+            if (UIManager.Instance != null)
+                UIManager.Instance.Show<ShopView>();
+            else
+                Debug.LogError($"[{nameof(MainMenu)}] UIManager instance is null");
+
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlayEffect(SoundID.ButtonSound);
+            else
+                Debug.LogWarning($"[{nameof(MainMenu)}] AudioManager instance is null");
         }
     }
 }

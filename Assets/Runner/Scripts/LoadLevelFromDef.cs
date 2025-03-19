@@ -24,18 +24,32 @@ namespace HyperCasual.Runner
         
         public override IEnumerator Execute()
         {
-            if (m_LevelDefinition == null)
-                throw new Exception($"{nameof(m_LevelDefinition)} is null!");
-
-            yield return m_SceneController.LoadNewScene(nameof(m_LevelDefinition));
-
-            // Load managers specific to the level
-            foreach (var prefab in m_ManagerPrefabs)
+            try
             {
-                Object.Instantiate(prefab);
-            }
+                if (m_LevelDefinition == null)
+                    throw new Exception($"{nameof(m_LevelDefinition)} is null!");
 
-            GameManager.Instance.LoadLevel(m_LevelDefinition);
+                yield return m_SceneController.LoadNewScene(nameof(m_LevelDefinition));
+
+                // Pre-instantiate managers to improve loading efficiency
+                var managerInstances = new GameObject[m_ManagerPrefabs.Length];
+                for (int i = 0; i < m_ManagerPrefabs.Length; i++)
+                {
+                    if (m_ManagerPrefabs[i] != null)
+                        managerInstances[i] = Object.Instantiate(m_ManagerPrefabs[i]);
+                }
+
+                // Load level after managers are ready
+                if (GameManager.Instance != null)
+                    GameManager.Instance.LoadLevel(m_LevelDefinition);
+                else
+                    Debug.LogError("GameManager instance not found!");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error loading level: {e.Message}");
+                throw;
+            }
         }
     }
 }

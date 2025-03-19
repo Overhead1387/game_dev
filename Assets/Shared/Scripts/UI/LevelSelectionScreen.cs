@@ -25,6 +25,28 @@ namespace HyperCasual.Gameplay
         AbstractGameEvent m_NextLevelEvent;
         [SerializeField]
         AbstractGameEvent m_BackEvent;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            ValidateReferences();
+        }
+
+        void ValidateReferences()
+        {
+            if (m_QuickPlayButton == null)
+                Debug.LogError($"[{nameof(LevelSelectionScreen)}] Quick Play Button reference is missing");
+            if (m_BackButton == null)
+                Debug.LogError($"[{nameof(LevelSelectionScreen)}] Back Button reference is missing");
+            if (m_LevelButtonPrefab == null)
+                Debug.LogError($"[{nameof(LevelSelectionScreen)}] Level Button Prefab reference is missing");
+            if (m_LevelButtonsRoot == null)
+                Debug.LogError($"[{nameof(LevelSelectionScreen)}] Level Buttons Root reference is missing");
+            if (m_NextLevelEvent == null)
+                Debug.LogError($"[{nameof(LevelSelectionScreen)}] Next Level Event reference is missing");
+            if (m_BackEvent == null)
+                Debug.LogError($"[{nameof(LevelSelectionScreen)}] Back Event reference is missing");
+        }
 #if UNITY_EDITOR
         [SerializeField]
         bool m_UnlockAllLevels;
@@ -47,14 +69,18 @@ namespace HyperCasual.Gameplay
         {
             ResetButtonData();
             
-            m_QuickPlayButton.AddListener(OnQuickPlayButtonClicked);
-            m_BackButton.AddListener(OnBackButtonClicked);
+            if (m_QuickPlayButton != null)
+                m_QuickPlayButton.AddListener(OnQuickPlayButtonClicked);
+            if (m_BackButton != null)
+                m_BackButton.AddListener(OnBackButtonClicked);
         }
 
         void OnDisable()
         {
-            m_QuickPlayButton.RemoveListener(OnQuickPlayButtonClicked);
-            m_BackButton.RemoveListener(OnBackButtonClicked);
+            if (m_QuickPlayButton != null)
+                m_QuickPlayButton.RemoveListener(OnQuickPlayButtonClicked);
+            if (m_BackButton != null)
+                m_BackButton.RemoveListener(OnBackButtonClicked);
         }
 
         void ResetButtonData()
@@ -76,8 +102,15 @@ namespace HyperCasual.Gameplay
             if (startingIndex < 0)
                 throw new Exception("Button is not initialized");
 
-            SequenceManager.Instance.SetStartingLevel(startingIndex);
-            m_NextLevelEvent.Raise();
+            if (SequenceManager.Instance != null)
+                SequenceManager.Instance.SetStartingLevel(startingIndex);
+            else
+                Debug.LogError($"[{nameof(LevelSelectionScreen)}] SequenceManager instance is null");
+
+            if (m_NextLevelEvent != null)
+                m_NextLevelEvent.Raise();
+            else
+                Debug.LogWarning($"[{nameof(LevelSelectionScreen)}] Next Level Event is null");
         }
         
         void OnQuickPlayButtonClicked()
@@ -87,7 +120,10 @@ namespace HyperCasual.Gameplay
         
         void OnBackButtonClicked()
         {
-            m_BackEvent.Raise();
+            if (m_BackEvent != null)
+                m_BackEvent.Raise();
+            else
+                Debug.LogWarning($"[{nameof(LevelSelectionScreen)}] Back Event is null");
         }
     }
 }

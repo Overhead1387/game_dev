@@ -112,20 +112,46 @@ namespace HyperCasual.Runner
         /// <param name="updatedLevel">
         /// The LevelDefinition that has been edited in the Runner Level Editor Window.
         /// </param>
-        public void SaveValues(LevelDefinition updatedLevel)
+        /// <summary>
+        /// Validates level parameters to ensure they are within acceptable ranges
+        /// </summary>
+        /// <returns>True if all parameters are valid, false otherwise</returns>
+        private bool ValidateLevelParameters()
         {
-            // TODO - Add Tests for this!
-            LevelLength = updatedLevel.LevelLength;
-            LevelLengthBufferStart = updatedLevel.LevelLengthBufferStart;
-            LevelLengthBufferEnd = updatedLevel.LevelLengthBufferEnd;
-            LevelWidth = updatedLevel.LevelWidth;
-            LevelThickness = updatedLevel.LevelThickness;
+            if (LevelLength <= 0 || LevelWidth <= 0 || LevelThickness <= 0)
+                return false;
+            if (LevelLengthBufferStart < 0 || LevelLengthBufferEnd < 0)
+                return false;
+            if (GridSize <= 0)
+                return false;
+            if (TerrainMaterial == null || StartPrefab == null || EndPrefab == null)
+                return false;
+            return true;
+        }
+
+        /// <summary>
+        /// Store all values from updatedLevel into this LevelDefinition with validation.
+        /// </summary>
+        /// <param name="updatedLevel">The LevelDefinition that has been edited in the Runner Level Editor Window.</param>
+        /// <returns>True if values were successfully saved, false if validation failed</returns>
+        public bool SaveValues(LevelDefinition updatedLevel)
+        {
+            if (updatedLevel == null)
+                return false;
+
+            LevelLength = Mathf.Max(0.1f, updatedLevel.LevelLength);
+            LevelLengthBufferStart = Mathf.Max(0, updatedLevel.LevelLengthBufferStart);
+            LevelLengthBufferEnd = Mathf.Max(0, updatedLevel.LevelLengthBufferEnd);
+            LevelWidth = Mathf.Max(0.1f, updatedLevel.LevelWidth);
+            LevelThickness = Mathf.Max(0.01f, updatedLevel.LevelThickness);
             SnapToGrid = updatedLevel.SnapToGrid;
-            GridSize = updatedLevel.GridSize;
+            GridSize = Mathf.Max(0.1f, updatedLevel.GridSize);
             TerrainMaterial = updatedLevel.TerrainMaterial;
             StartPrefab = updatedLevel.StartPrefab;
             EndPrefab = updatedLevel.EndPrefab;
             Spawnables = updatedLevel.Spawnables;
+
+            return ValidateLevelParameters();
         }
     }
 }

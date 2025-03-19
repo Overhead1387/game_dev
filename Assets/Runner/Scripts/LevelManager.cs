@@ -35,7 +35,8 @@ namespace HyperCasual.Runner
         }
         LevelDefinition m_LevelDefinition;
 
-        List<Spawnable> m_ActiveSpawnables = new List<Spawnable>();
+        private readonly List<Spawnable> m_ActiveSpawnables = new List<Spawnable>();
+        private Transform m_Transform;
 
         /// <summary>
         /// Call this method to add a Spawnable to the list of active Spawnables.
@@ -58,11 +59,13 @@ namespace HyperCasual.Runner
 
         void Awake()
         {
+            m_Transform = transform;
             SetupInstance();
         }
 
         void OnEnable()
         {
+            m_Transform = transform;
             SetupInstance();
         }
 

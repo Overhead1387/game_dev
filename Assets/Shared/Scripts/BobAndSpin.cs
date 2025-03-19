@@ -29,16 +29,19 @@ namespace HyperCasual.Core
 
         void Update()
         {
+            float deltaTime = Time.deltaTime;
             float offset = (UsePositionBasedOffset) ? m_StartPosition.z * PositionBasedScale + Time.time : Time.time;
 
             if (Bob)
             {
-                m_Transform.position = m_StartPosition + Vector3.up * Mathf.Sin(offset * BobSpeed) * BobHeight;
+                Vector3 newPosition = m_StartPosition + Vector3.up * Mathf.Sin(offset * BobSpeed) * BobHeight;
+                m_Transform.position = Vector3.Lerp(m_Transform.position, newPosition, deltaTime * BobSpeed);
             }
 
             if (Spin)
             {
-                m_Transform.rotation = m_StartRotation * Quaternion.AngleAxis(offset * SpinSpeed, Vector3.up);
+                Quaternion targetRotation = m_StartRotation * Quaternion.AngleAxis(offset * SpinSpeed, Vector3.up);
+                m_Transform.rotation = Quaternion.Slerp(m_Transform.rotation, targetRotation, deltaTime * SpinSpeed * 0.1f);
             }
         }
     }

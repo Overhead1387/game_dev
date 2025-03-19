@@ -23,6 +23,26 @@ namespace HyperCasual.Runner
         TextMeshProUGUI m_GoldText;
         [SerializeField]
         Slider m_XpSlider;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            ValidateReferences();
+        }
+
+        void ValidateReferences()
+        {
+            if (m_NextButton == null)
+                Debug.LogError($"[{nameof(LevelCompleteScreen)}] Next Button reference is missing");
+            if (m_Stars == null || m_Stars.Length == 0)
+                Debug.LogError($"[{nameof(LevelCompleteScreen)}] Stars array is empty or null");
+            if (m_NextLevelEvent == null)
+                Debug.LogError($"[{nameof(LevelCompleteScreen)}] Next Level Event reference is missing");
+            if (m_GoldText == null)
+                Debug.LogError($"[{nameof(LevelCompleteScreen)}] Gold Text reference is missing");
+            if (m_XpSlider == null)
+                Debug.LogError($"[{nameof(LevelCompleteScreen)}] XP Slider reference is missing");
+        }
         
         /// <summary>
         /// The slider that displays the XP value 
@@ -87,29 +107,39 @@ namespace HyperCasual.Runner
 
         void OnEnable()
         {
-            m_NextButton.AddListener(OnNextButtonClicked);
+            if (m_NextButton != null)
+                m_NextButton.AddListener(OnNextButtonClicked);
         }
 
         void OnDisable()
         {
-            m_NextButton.RemoveListener(OnNextButtonClicked);
+            if (m_NextButton != null)
+                m_NextButton.RemoveListener(OnNextButtonClicked);
         }
 
         void OnNextButtonClicked()
         {
-            m_NextLevelEvent.Raise();
+            if (m_NextLevelEvent != null)
+                m_NextLevelEvent.Raise();
+            else
+                Debug.LogWarning($"[{nameof(LevelCompleteScreen)}] Next Level Event is null");
         }
 
         void DisplayStars(int count)
         {
-            count = Mathf.Clamp(count, 0, m_Stars.Length);
-
-            if (m_Stars.Length > 0 && count >= 0 && count <= m_Stars.Length)
+            if (m_Stars == null || m_Stars.Length == 0)
             {
-                for (int i = 0; i < m_Stars.Length; i++)
-                {
+                Debug.LogWarning($"[{nameof(LevelCompleteScreen)}] Cannot display stars - star array is empty or null");
+                return;
+            }
+
+            count = Mathf.Clamp(count, 0, m_Stars.Length);
+            for (int i = 0; i < m_Stars.Length; i++)
+            {
+                if (m_Stars[i] != null)
                     m_Stars[i].gameObject.SetActive(i < count);
-                }
+                else
+                    Debug.LogWarning($"[{nameof(LevelCompleteScreen)}] Star at index {i} is null");
             }
         }
     }

@@ -143,12 +143,17 @@ namespace HyperCasual.Runner
             return playerPosition;
         }
 
+        private Vector3 m_CachedOffset;
+        private Vector3 m_CachedLookAtOffset;
+        private Vector3 m_CurrentVelocity;
+        private Vector3 m_CurrentLookAtVelocity;
+        private const float k_PositionSmoothTime = 0.1f;
+        private const float k_RotationSmoothTime = 0.15f;
+
         void LateUpdate()
         {
-            if (m_Transform == null)
-            {
+            if (m_Transform == null || !Application.isPlaying)
                 return;
-            }
 
             SetCameraPositionAndOrientation(m_SmoothCameraFollow);
         }
@@ -156,23 +161,50 @@ namespace HyperCasual.Runner
         void SetCameraPositionAndOrientation(bool smoothCameraFollow)
         {
             Vector3 playerPosition = GetPlayerPosition();
-
-            Vector3 offset = playerPosition + GetCameraOffset();
-            Vector3 lookAtOffset = playerPosition + GetCameraLookAtOffset();
+            m_CachedOffset = playerPosition + GetCameraOffset();
+            m_CachedLookAtOffset = playerPosition + GetCameraLookAtOffset();
 
             if (smoothCameraFollow)
             {
-                float lerpAmound = Time.deltaTime * m_SmoothCameraFollowStrength;
+                float lerpAmount = Time.deltaTime * m_SmoothCameraFollowStrength;
+                
+                // Use SmoothDamp for smoother camera movement and rotation
+                var targetPos = m_CachedOffset;
+                var currentPos = m_Transform.position;
+                
+                currentPos = Vector3.SmoothDamp(
+                    currentPos,
+                    targetPos,
+                    ref m_CurrentVelocity,
+                    k_PositionSmoothTime
+                );
 
-                m_Transform.position = Vector3.Lerp(m_Transform.position, offset, lerpAmound);
-                m_Transform.LookAt(Vector3.Lerp(m_Transform.position + m_Transform.forward, lookAtOffset, lerpAmound));
+                // Smoothly interpolate look-at position for more natural camera rotation
+                var currentLookAt = m_Transform.position + m_Transform.forward;
+                var targetLookAt = m_CachedLookAtOffset;
+                
+                var smoothLookAt = Vector3.SmoothDamp(
+                    currentLookAt,
+                    targetLookAt,
+                    ref m_CurrentLookAtVelocity,
+                    k_RotationSmoothTime
+                );
 
-                m_Transform.position = new Vector3(m_Transform.position.x, m_Transform.position.y, offset.z);
+                // Update position and rotation
+                m_Transform.position = currentPos;
+                m_Transform.LookAt(smoothLookAt);
+
+                // Lock Z position to target
+                m_Transform.position = new Vector3(
+                    m_Transform.position.x,
+                    m_Transform.position.y,
+                    m_CachedOffset.z
+                );
             }
             else
             {
-                m_Transform.position = playerPosition + GetCameraOffset();
-                m_Transform.LookAt(lookAtOffset);
+                m_Transform.position = m_CachedOffset;
+                m_Transform.LookAt(m_CachedLookAtOffset);
             }
         }
     }

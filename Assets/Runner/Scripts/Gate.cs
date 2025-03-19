@@ -21,8 +21,9 @@ namespace HyperCasual.Runner
         [SerializeField]
         RectTransform m_Text;
 
-        bool m_Applied;
-        Vector3 m_TextInitialScale;
+        private bool m_Applied;
+        private Vector3 m_TextInitialScale;
+        private new Transform m_Transform;
 
         enum GateType
         {
@@ -63,6 +64,7 @@ namespace HyperCasual.Runner
         protected override void Awake()
         {
             base.Awake();
+            m_Transform = transform;
 
             if (m_Text != null)
             {

@@ -16,13 +16,14 @@ namespace HyperCasual.Runner
         [SerializeField]
         SoundID m_Sound = SoundID.None;
         
-        const string k_PlayerTag = "Player";
+
 
         public ItemPickedEvent m_Event;
         public int m_Count;
 
-        bool m_Collected;
-        Renderer[] m_Renderers;
+        private bool m_Collected;
+        private Renderer[] m_Renderers;
+        private const string k_PlayerTag = "Player";
 
         /// <summary>
         /// Reset the gate to its initial state. Called when a level

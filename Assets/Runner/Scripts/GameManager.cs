@@ -42,6 +42,9 @@ namespace HyperCasual.Runner
         GameObject m_CurrentTerrainGO;
         GameObject m_LevelMarkersGO;
 
+        // Object pool for spawnable objects
+        private Dictionary<string, Queue<GameObject>> m_SpawnablePool = new Dictionary<string, Queue<GameObject>>();
+        private const int k_InitialPoolSize = 10;
         List<Spawnable> m_ActiveSpawnables = new List<Spawnable>();
 
 #if UNITY_EDITOR
@@ -114,6 +117,37 @@ namespace HyperCasual.Runner
         /// <param name="levelGameObject">
         /// A new GameObject to be created, acting as the parent for the level to be loaded
         /// </param>
+        private GameObject GetOrCreateSpawnable(GameObject prefab, Vector3 position, Quaternion rotation)
+        {
+            string prefabId = prefab.name;
+            if (!m_SpawnablePool.ContainsKey(prefabId))
+            {
+                m_SpawnablePool[prefabId] = new Queue<GameObject>();
+                // Pre-instantiate objects
+                for (int i = 0; i < k_InitialPoolSize; i++)
+                {
+                    var obj = Instantiate(prefab);
+                    obj.SetActive(false);
+                    m_SpawnablePool[prefabId].Enqueue(obj);
+                }
+            }
+
+            GameObject spawned;
+            if (m_SpawnablePool[prefabId].Count > 0)
+            {
+                spawned = m_SpawnablePool[prefabId].Dequeue();
+                spawned.transform.position = position;
+                spawned.transform.rotation = rotation;
+                spawned.SetActive(true);
+            }
+            else
+            {
+                spawned = Instantiate(prefab, position, rotation);
+            }
+
+            return spawned;
+        }
+
         public static void LoadLevel(LevelDefinition levelDefinition, ref GameObject levelGameObject)
         {
             if (levelDefinition == null)
@@ -140,6 +174,23 @@ namespace HyperCasual.Runner
 
             Transform levelParent = levelGameObject.transform;
 
+            // Pre-warm object pools if in play mode
+            if (Application.isPlaying)
+            {
+                var uniquePrefabs = new HashSet<GameObject>();
+                foreach (var spawnable in levelDefinition.Spawnables)
+                {
+                    if (spawnable.SpawnablePrefab != null)
+                    {
+                        uniquePrefabs.Add(spawnable.SpawnablePrefab);
+                    }
+                }
+                foreach (var prefab in uniquePrefabs)
+                {
+                    Instance.GetOrCreateSpawnable(prefab, Vector3.zero, Quaternion.identity).SetActive(false);
+                }
+            }
+
             for (int i = 0; i < levelDefinition.Spawnables.Length; i++)
             {
                 LevelDefinition.SpawnableObject spawnableObject = levelDefinition.Spawnables[i];
@@ -157,7 +208,7 @@ namespace HyperCasual.Runner
                 
                 if (Application.isPlaying)
                 {
-                    go = GameObject.Instantiate(spawnableObject.SpawnablePrefab, position, Quaternion.Euler(eulerAngles));
+                    go = Instance.GetOrCreateSpawnable(spawnableObject.SpawnablePrefab, position, Quaternion.Euler(eulerAngles));
                 }
                 else
                 {

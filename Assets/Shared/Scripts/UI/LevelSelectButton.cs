@@ -18,6 +18,18 @@ namespace HyperCasual.Runner
         int m_Index = -1;
         Action<int> m_OnClick;
         bool m_IsUnlocked;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            ValidateReferences();
+        }
+
+        void ValidateReferences()
+        {
+            if (m_Text == null)
+                Debug.LogError($"[{nameof(LevelSelectButton)}] Text reference is missing");
+        }
         
         /// <param name="index">The index of the associated level</param>
         /// <param name="unlocked">Is the associated level locked?</param>
@@ -25,10 +37,15 @@ namespace HyperCasual.Runner
         public void SetData(int index, bool unlocked, Action<int> onClick)
         {
             m_Index = index;
-            m_Text.text = (index + 1).ToString();
+            if (m_Text != null)
+                m_Text.text = (index + 1).ToString();
+            else
+                Debug.LogWarning($"[{nameof(LevelSelectButton)}] Cannot set text - Text component is missing");
+            
             m_OnClick = onClick;
             m_IsUnlocked = unlocked;
-            m_Button.interactable = m_IsUnlocked;
+            if (m_Button != null)
+                m_Button.interactable = m_IsUnlocked;
         }
 
         protected override void OnEnable()
@@ -45,6 +62,9 @@ namespace HyperCasual.Runner
 
         protected override void OnClick()
         {
+            if (m_Index < 0)
+                throw new Exception("Button is not initialized");
+
             m_OnClick?.Invoke(m_Index);
             PlayButtonSound();
         }

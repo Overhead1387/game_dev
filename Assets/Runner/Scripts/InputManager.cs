@@ -8,22 +8,22 @@ using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
 namespace HyperCasual.Runner
 {
     /// <summary>
-    /// A simple Input Manager for a Runner game.
+    /// Manages touch and mouse input for the runner game, implementing the Singleton pattern.
+    /// Handles input detection and movement calculations for the PlayerController with platform-specific optimizations.
     /// </summary>
     public class InputManager : MonoBehaviour
     {
-        /// <summary>
-        /// Returns the InputManager.
-        /// </summary>
+        // Singleton instance accessor
         public static InputManager Instance => s_Instance;
-        static InputManager s_Instance;
+        private static InputManager s_Instance;
 
-        [SerializeField]
-        float m_InputSensitivity = 1.5f;
+        [SerializeField, Tooltip("Controls the sensitivity of horizontal movement")]
+        private float m_InputSensitivity = 1.5f;
 
-        bool m_HasInput;
-        Vector3 m_InputPosition;
-        Vector3 m_PreviousInputPosition;
+        private bool m_HasInput;
+        private Vector3 m_InputPosition;
+        private Vector3 m_PreviousInputPosition;
+        private PlayerController m_CachedPlayerController;
 
         void Awake()
         {
@@ -46,11 +46,21 @@ namespace HyperCasual.Runner
             EnhancedTouchSupport.Disable();
         }
 
+        void Start()
+        {
+            m_CachedPlayerController = PlayerController.Instance;
+        }
+
+        /// <summary>
+        /// Processes input and updates player movement based on platform-specific input methods.
+        /// </summary>
         void Update()
         {
-            if (PlayerController.Instance == null)
+            if (m_CachedPlayerController == null)
             {
-                return;
+                m_CachedPlayerController = PlayerController.Instance;
+                if (m_CachedPlayerController == null)
+                    return;
             }
 
 #if UNITY_EDITOR
@@ -89,11 +99,11 @@ namespace HyperCasual.Runner
             if (m_HasInput)
             {
                 float normalizedDeltaPosition = (m_InputPosition.x - m_PreviousInputPosition.x) / Screen.width * m_InputSensitivity;
-                PlayerController.Instance.SetDeltaPosition(normalizedDeltaPosition);
+                m_CachedPlayerController.SetDeltaPosition(normalizedDeltaPosition);
             }
             else
             {
-                PlayerController.Instance.CancelMovement();
+                m_CachedPlayerController.CancelMovement();
             }
 
             m_PreviousInputPosition = m_InputPosition;

@@ -74,9 +74,13 @@ namespace HyperCasual.Runner
 
         void Start()
         {
+            m_Clips.Clear();
             foreach (var sound in m_Sounds)
             {
-                m_Clips.Add(sound.m_SoundID, sound.m_AudioClip);
+                if (sound.m_AudioClip != null && !m_Clips.ContainsKey(sound.m_SoundID))
+                {
+                    m_Clips.Add(sound.m_SoundID, sound.m_AudioClip);
+                }
             }
         }
 
@@ -111,8 +115,11 @@ namespace HyperCasual.Runner
 
         void PlayMusic(AudioClip audioClip, bool looping = true)
         {
-            if (m_MusicSource.isPlaying)
+            if (audioClip == null)
                 return;
+                
+            if (m_MusicSource.isPlaying)
+                m_MusicSource.Stop();
             
             m_MusicSource.clip = audioClip;
             m_MusicSource.loop = looping;
@@ -124,7 +131,7 @@ namespace HyperCasual.Runner
         /// </summary>
         /// <param name="soundID">The ID of the music</param>
         /// <param name="looping">Is music looping?</param>
-        public void PlayMusic(SoundID soundID, bool looping = true)
+        void PlayMusic(SoundID soundID, bool looping = true)
         {
             PlayMusic(m_Clips[soundID], looping);
         }
@@ -132,13 +139,16 @@ namespace HyperCasual.Runner
         /// <summary>
         /// Stop the current music
         /// </summary>
-        public void StopMusic()
+        void StopMusic()
         {
             m_MusicSource.Stop();
         }
 
         void PlayEffect(AudioClip audioClip)
         {
+            if (audioClip == null)
+                return;
+                
             if (Time.time - m_LastSoundPlayTime >= m_MinSoundInterval)
             {
                 m_EffectSource.PlayOneShot(audioClip);
@@ -150,7 +160,7 @@ namespace HyperCasual.Runner
         /// Play a sound effect based on its sound ID
         /// </summary>
         /// <param name="soundID">The ID of the sound effect</param>
-        public void PlayEffect(SoundID soundID)
+        void PlayEffect(SoundID soundID)
         {
             if (soundID == SoundID.None)
                 return;

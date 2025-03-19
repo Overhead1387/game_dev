@@ -179,34 +179,65 @@ namespace HyperCasual.Gameplay
         
         void OnMainMenuDisplayed()
         {
-            ShowUI<MainMenu>();
-            AudioManager.Instance.PlayMusic(SoundID.MenuMusic);
+            try
+            {
+                ShowUI<MainMenu>();
+                AudioManager.Instance.PlayMusic(SoundID.MenuMusic);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to display main menu: {e.Message}");
+            }
         }
 
         void OnWinScreenDisplayed(IState currentLevel)
         {
-            UIManager.Instance.Show<LevelCompleteScreen>();
-            var currentLevelIndex = m_LevelStates.IndexOf(currentLevel);
-            
-            if (currentLevelIndex == -1)
-                throw new Exception($"{nameof(currentLevel)} is invalid!");
-            
-            var levelProgress = SaveManager.Instance.LevelProgress;
-            if (currentLevelIndex == levelProgress && currentLevelIndex < m_LevelStates.Count - 1)
-                SaveManager.Instance.LevelProgress = levelProgress + 1;
+            try
+            {
+                UIManager.Instance.Show<LevelCompleteScreen>();
+                var currentLevelIndex = m_LevelStates.IndexOf(currentLevel);
+                
+                if (currentLevelIndex == -1)
+                    throw new Exception($"{nameof(currentLevel)} is invalid!");
+                
+                var levelProgress = SaveManager.Instance.LevelProgress;
+                if (currentLevelIndex == levelProgress && currentLevelIndex < m_LevelStates.Count - 1)
+                {
+                    SaveManager.Instance.LevelProgress = levelProgress + 1;
+                    AudioManager.Instance.PlayMusic(SoundID.VictoryMusic);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to display win screen: {e.Message}");
+            }
         }
 
         void OnLevelSelectionDisplayed()
         {
-            ShowUI<LevelSelectionScreen>();
-            AudioManager.Instance.PlayMusic(SoundID.MenuMusic);
+            try
+            {
+                ShowUI<LevelSelectionScreen>();
+                AudioManager.Instance.PlayMusic(SoundID.MenuMusic);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to display level selection: {e.Message}");
+            }
         }
         
         void OnGamePlayStarted(IState current)
         {
-            m_CurrentLevel = current;
-            ShowUI<Hud>();
-            AudioManager.Instance.StopMusic();
+            try
+            {
+                m_CurrentLevel = current;
+                ShowUI<Hud>();
+                AudioManager.Instance.PlayMusic(SoundID.GameplayMusic);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to start gameplay: {e.Message}");
+            }
         }
     }
 }

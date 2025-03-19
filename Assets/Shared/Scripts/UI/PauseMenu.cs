@@ -24,26 +24,54 @@ namespace HyperCasual.Runner
         [SerializeField]
         AbstractGameEvent m_QuitEvent;
 
+        protected override void Awake()
+        {
+            base.Awake();
+            ValidateReferences();
+        }
+
+        void ValidateReferences()
+        {
+            if (m_ContinueButton == null)
+                Debug.LogError($"[{nameof(PauseMenu)}] Continue Button reference is missing");
+            if (m_QuitButton == null)
+                Debug.LogError($"[{nameof(PauseMenu)}] Quit Button reference is missing");
+            if (m_ContinueEvent == null)
+                Debug.LogError($"[{nameof(PauseMenu)}] Continue Event reference is missing");
+            if (m_QuitEvent == null)
+                Debug.LogError($"[{nameof(PauseMenu)}] Quit Event reference is missing");
+        }
+
         void OnEnable()
         {
-            m_ContinueButton.AddListener(OnContinueClicked);
-            m_QuitButton.AddListener(OnQuitClicked);
+            if (m_ContinueButton != null)
+                m_ContinueButton.AddListener(OnContinueClicked);
+            if (m_QuitButton != null)
+                m_QuitButton.AddListener(OnQuitClicked);
         }
 
         void OnDisable()
         {
-            m_ContinueButton.RemoveListener(OnContinueClicked);
-            m_QuitButton.RemoveListener(OnQuitClicked);
+            if (m_ContinueButton != null)
+                m_ContinueButton.RemoveListener(OnContinueClicked);
+            if (m_QuitButton != null)
+                m_QuitButton.RemoveListener(OnQuitClicked);
         }
 
         void OnContinueClicked()
         {
-            m_ContinueEvent.Raise();
+            if (m_ContinueEvent != null)
+                m_ContinueEvent.Raise();
+            else
+                Debug.LogWarning($"[{nameof(PauseMenu)}] Continue Event is null");
         }
 
         void OnQuitClicked()
         {
-            m_QuitEvent.Raise();
+            if (m_QuitEvent != null)
+                m_QuitEvent.Raise();
+            else
+                Debug.LogWarning($"[{nameof(PauseMenu)}] Quit Event is null");
         }
     }
 }

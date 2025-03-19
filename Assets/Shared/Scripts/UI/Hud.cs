@@ -23,6 +23,24 @@ namespace HyperCasual.Gameplay
         [SerializeField]
         AbstractGameEvent m_PauseEvent;
 
+        protected override void Awake()
+        {
+            base.Awake();
+            ValidateReferences();
+        }
+
+        void ValidateReferences()
+        {
+            if (m_GoldText == null)
+                Debug.LogError($"[{nameof(Hud)}] Gold Text reference is missing");
+            if (m_XpSlider == null)
+                Debug.LogError($"[{nameof(Hud)}] XP Slider reference is missing");
+            if (m_PauseButton == null)
+                Debug.LogError($"[{nameof(Hud)}] Pause Button reference is missing");
+            if (m_PauseEvent == null)
+                Debug.LogError($"[{nameof(Hud)}] Pause Event reference is missing");
+        }
+
         /// <summary>
         /// The slider that displays the XP value 
         /// </summary>
@@ -68,17 +86,22 @@ namespace HyperCasual.Gameplay
 
         void OnEnable()
         {
-            m_PauseButton.AddListener(OnPauseButtonClick);
+            if (m_PauseButton != null)
+                m_PauseButton.AddListener(OnPauseButtonClick);
         }
 
         void OnDisable()
         {
-            m_PauseButton.RemoveListener(OnPauseButtonClick);
+            if (m_PauseButton != null)
+                m_PauseButton.RemoveListener(OnPauseButtonClick);
         }
 
         void OnPauseButtonClick()
         {
-            m_PauseEvent.Raise();
+            if (m_PauseEvent != null)
+                m_PauseEvent.Raise();
+            else
+                Debug.LogWarning($"[{nameof(Hud)}] Pause Event is null");
         }
     }
 }

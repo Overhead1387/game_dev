@@ -7,12 +7,25 @@ using UnityEngine.UI;
 namespace HyperCasual.Runner
 {
     /// <summary>
-    /// This View contains shop menu functionalities
+    /// Shop menu that provides access to in-game purchases and customization options.
+    /// Contains a back button to return to the previous menu.
     /// </summary>
     public class ShopView : View
     {
-        [SerializeField]
+        [SerializeField, Tooltip("Back button to return to previous menu")]
         HyperCasualButton m_Button;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            ValidateComponents();
+        }
+
+        void ValidateComponents()
+        {
+            if (m_Button == null)
+                Debug.LogError($"[{nameof(ShopView)}] Back Button reference is missing");
+        }
 
         void OnEnable()
         {

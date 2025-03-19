@@ -1,32 +1,41 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace HyperCasual.Core
 {
     /// <summary>
-    /// An abstract class that provides base functionalities of a singleton for its derived classes
+    /// Base class implementing the thread-safe Singleton pattern for MonoBehaviour components.
+    /// Provides automatic initialization and guaranteed single instance across the application.
     /// </summary>
-    /// <typeparam name="T">The type of singleton instance</typeparam>
+    /// <typeparam name="T">The type of the singleton component. Must derive from Component.</typeparam>
     public abstract class AbstractSingleton<T> : MonoBehaviour where T : Component
     {
-        static T s_Instance;
+        private static T s_Instance;
+        private static readonly object s_Lock = new object();
+        private static bool s_IsInitialized;
 
         /// <summary>
-        /// static Singleton instance
+        /// Global access point to the singleton instance.
+        /// Automatically creates a new instance if none exists.
         /// </summary>
         public static T Instance
         {
             get
             {
-                if (s_Instance == null)
+                if (!s_IsInitialized)
                 {
-                    s_Instance = FindObjectOfType<T>();
-                    if (s_Instance == null)
+                    lock (s_Lock)
                     {
-                        GameObject obj = new GameObject();
-                        obj.name = typeof(T).Name;
-                        s_Instance = obj.AddComponent<T>();
+                        if (!s_IsInitialized)
+                        {
+                            s_Instance = FindObjectOfType<T>();
+                            if (s_Instance == null)
+                            {
+                                GameObject obj = new GameObject(typeof(T).Name);
+                                s_Instance = obj.AddComponent<T>();
+                                DontDestroyOnLoad(obj);
+                            }
+                            s_IsInitialized = true;
+                        }
                     }
                 }
 
@@ -34,6 +43,9 @@ namespace HyperCasual.Core
             }
         }
 
+        /// <summary>
+        /// Ensures singleton instance uniqueness during MonoBehaviour initialization.
+        /// </summary>
         protected virtual void Awake()
         {
             if (s_Instance == null)

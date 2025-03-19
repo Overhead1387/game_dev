@@ -63,12 +63,22 @@ namespace HyperCasual.Runner
             float endBuffer = terrainDimensions.EndBuffer;
             float thickness = terrainDimensions.Thickness;
 
-            Mesh mesh = new Mesh();
-            mesh.name = "Terrain";
-            Vector3[] vertices = new Vector3[24];
-            Vector3[] normals = new Vector3[24];
-            Vector2[] uvs = new Vector2[24];
-            int[] triangles = new int[36];
+            const int k_VertexCount = 24;
+            const int k_TriangleCount = 36;
+
+            Mesh mesh = new Mesh
+            {
+                name = "Terrain",
+                vertices = new Vector3[k_VertexCount],
+                normals = new Vector3[k_VertexCount],
+                uv = new Vector2[k_VertexCount],
+                triangles = new int[k_TriangleCount]
+            };
+
+            Vector3[] vertices = mesh.vertices;
+            Vector3[] normals = mesh.normals;
+            Vector2[] uvs = mesh.uv;
+            int[] triangles = mesh.triangles;
 
             float halfWidth = width * 0.5f;
             float beginningOfStartBuffer = -startBuffer;
